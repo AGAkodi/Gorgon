@@ -7,14 +7,14 @@ static analysis, exploit intelligence, on-chain attestation, and transaction sim
 ---
 
 ## Phase 0 — Architecture & Setup (Day 1)
-- [ ] Lock verdict + simulation JSON schemas (see below), commit as `schemas/verdict.schema.json` and `schemas/simulation.schema.json`
-- [ ] Repo scaffold: `/static-analysis`, `/consensus`, `/exploit-intel`, `/attestation`, `/sandbox`, `/mcp-server`
-- [ ] Decide hosting (own server vs. serverless) for MCP endpoint — must be always-on per ASP category
-- [ ] Set up X Layer testnet wallet + faucet funds for attestation contract deploys
-- [ ] Set up EVM mainnet-fork RPC access (Tenderly or Anvil fork) for simulation
-- [ ] Set up Solana fork/local validator (`solana-test-validator` with cloned accounts) for simulation
-- [ ] Set up secrets management: `.env` (gitignored) for LLM API keys, RPC/Tenderly keys, attestation wallet private key — never committed
-- [ ] Add `README.md` (what this is, how to run it, disclaimer placeholder) and `LICENSE` to repo
+- [x] Lock verdict + simulation JSON schemas (see below), commit as `schemas/verdict.schema.json` and `schemas/simulation.schema.json`
+- [x] Repo scaffold: `/static-analysis`, `/consensus`, `/exploit-intel`, `/attestation`, `/sandbox`, `/mcp-server`
+- [x] Decide hosting (own server vs. serverless) for MCP endpoint — must be always-on per ASP category
+- [x] Set up X Layer testnet wallet + faucet funds for attestation contract deploys
+- [x] Set up EVM mainnet-fork RPC access (Tenderly or Anvil fork) for simulation
+- [ ] Set up Solana fork/local validator (`solana-test-validator` with cloned accounts) for simulation — validator running, account cloning deferred to Phase 5
+- [x] Set up secrets management: `.env` (gitignored) for LLM API keys, RPC/Tenderly keys, attestation wallet private key — never committed
+- [x] Add `README.md` (what this is, how to run it, disclaimer placeholder) and `LICENSE` to repo
 
 **Verdict schema (lock this first, everything else depends on it):**
 ```json
@@ -33,12 +33,12 @@ static analysis, exploit intelligence, on-chain attestation, and transaction sim
 ---
 
 ## Phase 1 — Static Analysis Engine (Day 1–2)
-- [ ] EVM: integrate Slither, wrap as callable service (input: source/bytecode → output: findings list)
-- [ ] EVM: test against 3 known-vulnerable contracts (reentrancy, unchecked call, access control) to validate output
-- [ ] Solana: integrate Soteria or equivalent Anchor static analyzer
-- [ ] Solana: test against known-vulnerable Anchor program samples
-- [ ] Normalize both outputs into shared `static_findings` schema shape
-- [ ] Handle unverified/no-source contracts gracefully (bytecode-only path or explicit "insufficient data" verdict)
+- [x] EVM: integrate Slither, wrap as callable service (input: source/bytecode → output: findings list)
+- [x] EVM: test against 3 known-vulnerable contracts (reentrancy, unchecked call, access control) to validate output
+- [ ] Solana: integrate Soteria or equivalent Anchor static analyzer — out of scope for now, EVM/X Layer first
+- [ ] Solana: test against known-vulnerable Anchor program samples — out of scope for now
+- [x] Normalize both outputs into shared `static_findings` schema shape — EVM done; Solana N/A until in scope
+- [x] Handle unverified/no-source contracts gracefully (bytecode-only path or explicit "insufficient data" verdict)
 
 ---
 
