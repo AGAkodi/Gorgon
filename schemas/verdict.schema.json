@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vetra.dev/schemas/verdict.schema.json",
+  "title": "Verdict",
+  "description": "Output of the Vetra security verdict pipeline for a single chain+address analysis.",
+  "type": "object",
+  "required": ["chain", "address", "verdict", "confidence", "model_consensus", "static_findings", "exploit_matches"],
+  "additionalProperties": false,
+  "properties": {
+    "chain": {
+      "type": "string",
+      "enum": ["evm", "solana"]
+    },
+    "address": {
+      "type": "string",
+      "description": "Contract or program address being analyzed."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["safe", "caution", "high_risk", "critical"]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "model_consensus": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["model", "risk_category", "rationale"],
+        "additionalProperties": false,
+        "properties": {
+          "model": { "type": "string" },
+          "risk_category": {
+            "type": "string",
+            "enum": ["safe", "caution", "high_risk", "critical"]
+          },
+          "rationale": { "type": "string" }
+        }
+      }
+    },
+    "static_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule", "severity", "location"],
+        "additionalProperties": false,
+        "properties": {
+          "rule": { "type": "string" },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "low", "medium", "high", "critical"]
+          },
+          "location": { "type": "string" }
+        }
+      }
+    },
+    "exploit_matches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["known_incident", "similarity_score"],
+        "additionalProperties": false,
+        "properties": {
+          "known_incident": { "type": "string" },
+          "similarity_score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "description": "Present once the verdict has been recorded on-chain. Absent for verdicts not yet attested.",
+      "required": ["tx_hash", "chain", "timestamp", "verdict_hash"],
+      "additionalProperties": false,
+      "properties": {
+        "tx_hash": { "type": "string" },
+        "chain": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "verdict_hash": { "type": "string" }
+      }
+    }
+  }
+}

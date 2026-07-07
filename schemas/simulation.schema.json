@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://vetra.dev/schemas/simulation.schema.json",
+  "title": "Simulation",
+  "description": "Output of the Vetra transaction simulation sandbox — the wallet impact report for a proposed contract call or decoded payload, run against a decoy wallet in an isolated fork/local validator.",
+  "type": "object",
+  "required": ["chain", "decoy_wallet", "target", "balance_deltas", "approvals", "ownership_changes", "risk_summary"],
+  "additionalProperties": false,
+  "properties": {
+    "chain": {
+      "type": "string",
+      "enum": ["evm", "solana"]
+    },
+    "decoy_wallet": {
+      "type": "string",
+      "description": "Isolated wallet address the simulation was run against. Never a real user wallet."
+    },
+    "target": {
+      "type": "object",
+      "description": "The contract call or decoded payload being simulated.",
+      "required": ["address", "method"],
+      "additionalProperties": false,
+      "properties": {
+        "address": { "type": "string" },
+        "method": { "type": "string" },
+        "calldata": { "type": "string" },
+        "decoded_from": {
+          "type": "string",
+          "description": "Origin of the payload if it came from a decoded link/site rather than a direct call, e.g. a URL."
+        }
+      }
+    },
+    "balance_deltas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["asset", "amount", "usd_value"],
+        "additionalProperties": false,
+        "properties": {
+          "asset": { "type": "string" },
+          "amount": { "type": "string", "description": "Signed decimal string, negative for outflow." },
+          "usd_value": { "type": "number" }
+        }
+      }
+    },
+    "approvals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["spender", "asset", "amount", "unlimited"],
+        "additionalProperties": false,
+        "properties": {
+          "spender": { "type": "string" },
+          "asset": { "type": "string" },
+          "amount": { "type": "string" },
+          "unlimited": { "type": "boolean" },
+          "known_drainer": {
+            "type": "boolean",
+            "description": "True if spender matched a known drainer address in the exploit intelligence corpus."
+          }
+        }
+      }
+    },
+    "ownership_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "from", "to"],
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["ownership_transfer", "permission_grant", "admin_change"]
+          },
+          "from": { "type": "string" },
+          "to": { "type": "string" }
+        }
+      }
+    },
+    "risk_summary": {
+      "type": "object",
+      "required": ["verdict", "headline"],
+      "additionalProperties": false,
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": ["safe", "caution", "high_risk", "critical"]
+        },
+        "headline": { "type": "string" }
+      }
+    }
+  }
+}
