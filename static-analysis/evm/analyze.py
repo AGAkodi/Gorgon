@@ -65,7 +65,11 @@ def has_solidity_source(path: Path) -> bool:
     return "pragma solidity" in text or "contract " in text
 
 
-def analyze(source_path: str) -> dict:
+def analyze(source_path: str, cwd: str = None) -> dict:
+    """cwd: directory to run slither/solc from, so package-style imports
+    (e.g. "@uniswap/v3-core/...") resolve against the contract's own
+    project root rather than the caller's working directory. Only needed
+    for multi-file real-world projects; single-file fixtures don't care."""
     path = Path(source_path)
 
     if not path.exists():
@@ -80,10 +84,12 @@ def analyze(source_path: str) -> dict:
         tmp_path = tmp.name
     Path(tmp_path).unlink()  # slither refuses to write over an existing file
 
+    target = str(path.resolve()) if cwd else str(path)
     result = subprocess.run(
-        ["slither", str(path), "--json", tmp_path],
+        ["slither", target, "--json", tmp_path],
         capture_output=True,
         text=True,
+        cwd=cwd,
     )
 
     try:

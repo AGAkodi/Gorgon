@@ -43,70 +43,72 @@ static analysis, exploit intelligence, on-chain attestation, and transaction sim
 ---
 
 ## Phase 2 — Multi-Model Consensus Engine (Day 2–3)
-- [ ] Write structured prompt template: contract context + static findings → model produces `{risk_category, rationale}`
-- [ ] Wire 2–3 models (e.g. Claude, GPT, one more) to run in parallel on same input
-- [ ] Build consensus logic: agreement → high confidence; disagreement → surfaced as signal, not averaged away
-- [ ] Test against 5–10 known-good and known-bad contracts (both chains) — check for false positives/negatives
-- [ ] Log disagreement cases separately — these are useful for corpus growth later (Phase 9)
+- [x] Write structured prompt template: contract context + static findings → model produces `{risk_category, rationale}`
+- [x] Wire 2–3 models (e.g. Claude, GPT, one more) to run in parallel on same input — wired + parallel execution confirmed; real API calls activate once `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` are set, currently untested live
+- [x] Build consensus logic: agreement → high confidence; disagreement → surfaced as signal, not averaged away
+- [x] Test against 5–10 known-good and known-bad contracts (both chains) — 6 EVM fixtures, 5/6 in expected bucket; the 1 "failure" is a real disagreement case, see `consensus/README.md`. Solana N/A (out of scope). Re-run once live keys are added.
+- [x] Log disagreement cases separately — these are useful for corpus growth later (Phase 9) — `consensus/data/disagreements.jsonl`
 
 ---
 
 ## Phase 3 — Exploit Intelligence Corpus (Day 4–5)
-- [ ] Curate seed corpus: SWC Registry entries + ~100–200 known incidents (DeFiHackLabs writeups, public postmortems)
-- [ ] Embed corpus (vector store — pick something lightweight, e.g. local embeddings + simple similarity search)
-- [ ] Build similarity match: static findings + function signatures → nearest known incidents + score
-- [ ] Document corpus as v1/fixed dataset in pitch materials — do not overclaim "real-time" intel
-- [ ] Add ingestion path/script so new confirmed incidents (including sandbox catches, Phase 9) can be appended later
+- [x] Curate seed corpus: SWC Registry entries + ~100–200 known incidents (DeFiHackLabs writeups, public postmortems) — 37 SWC + 100 incidents (87 sourced from DeFiHackLabs, 13 general-knowledge, clearly tagged), see `exploit-intel/README.md`
+- [x] Embed corpus (vector store — pick something lightweight, e.g. local embeddings + simple similarity search) — local TF-IDF + cosine, no model download/API call
+- [x] Build similarity match: static findings + function signatures → nearest known incidents + score
+- [x] Document corpus as v1/fixed dataset in pitch materials — do not overclaim "real-time" intel
+- [x] Add ingestion path/script so new confirmed incidents (including sandbox catches, Phase 9) can be appended later
 
 ---
 
 ## Phase 4 — On-Chain Attestation (Day 6)
-- [ ] Write minimal Solidity attestation contract: store `hash(chain+address+verdict+timestamp)`, emit event
-- [ ] Deploy to X Layer testnet, verify on explorer
-- [ ] Wire attestation write into verdict pipeline (after consensus + static + exploit match all complete)
-- [ ] Build read path: any agent/tool can query "has this address been attested, what was the verdict hash"
-- [ ] Implement caching: `hash(chain+address+bytecode)` → skip re-analysis if unchanged, serve cached attestation
+- [x] Write minimal Solidity attestation contract: store `hash(chain+address+verdict+timestamp)`, emit event
+- [x] Deploy to X Layer testnet, verify on explorer — deployed at `0x835f9ab4f2187427189dd463c4126011d3ebdb48` (chain id 1952), verified on-chain via `cast` (bytecode, owner, live attest/read round trip); no block-explorer source verification yet (no verifier API key set up)
+- [x] Wire attestation write into verdict pipeline (after consensus + static + exploit match all complete) — `attestation/full_pipeline.py`
+- [x] Build read path: any agent/tool can query "has this address been attested, what was the verdict hash" — `pipeline.get_attestation()`
+- [x] Implement caching: `hash(chain+address+bytecode)` → skip re-analysis if unchanged, serve cached attestation
 
 ---
 
 ## Phase 5 — Sandbox Layer 1: Transaction Simulation (Day 6–7)
 *(This is the demo centerpiece — prioritize getting this solid.)*
-- [ ] EVM: integrate Tenderly simulation API (or Anvil fork) against a decoy wallet with mock balances
-- [ ] Solana: integrate `simulateTransaction` against forked/cloned local validator with mock balances
-- [ ] Build "Wallet Impact Report" output: balance deltas, approvals granted (amount + spender), unlimited-approval flag, ownership/permission changes
-- [ ] Cross-reference simulated spender addresses against exploit corpus (known drainer contracts)
-- [ ] Accept input as: contract address + proposed call, OR a decoded payload (for the "malicious link" use case — decode first, simulate second)
-- [ ] Test against known drainer contract patterns (public examples exist from past incidents) to confirm detection
-- [ ] Explicitly scope in docs/pitch: "simulates the transaction impact; does not visit or execute against live external sites" — this is Layer 1, not Layer 2
+- [x] EVM: integrate Tenderly simulation API (or Anvil fork) against a decoy wallet with mock balances — Anvil fork + dedicated decoy wallet + mock ERC20
+- [ ] Solana: integrate `simulateTransaction` against forked/cloned local validator with mock balances — out of scope for now, EVM/X Layer first
+- [x] Build "Wallet Impact Report" output: balance deltas, approvals granted (amount + spender), unlimited-approval flag, ownership/permission changes
+- [x] Cross-reference simulated spender addresses against exploit corpus (known drainer contracts) — mechanism validated; registry is a placeholder seeded with the sandbox's own test fixture, not live threat intel (no independently-verifiable real addresses found this session), see `sandbox/README.md`
+- [x] Accept input as: contract address + proposed call, OR a decoded payload (for the "malicious link" use case — decode first, simulate second)
+- [x] Test against known drainer contract patterns (public examples exist from past incidents) to confirm detection — tested against our own modeled "claim your airdrop" drainer pattern
+- [x] Explicitly scope in docs/pitch: "simulates the transaction impact; does not visit or execute against live external sites" — this is Layer 1, not Layer 2
 
 ---
 
 ## Phase 6 — MCP Server & Payment Integration (Day 7–8)
-- [ ] Build MCP server exposing two tools: `get_security_verdict`, `simulate_wallet_interaction`
-- [ ] Deploy MCP server to an always-on host (VPS/container) — not localhost, must survive judge/agent calls at any hour
-- [ ] Set up basic uptime monitoring/alerting (e.g. a simple ping/healthcheck + notification) so you know if it goes down before OKX or a judge does
-- [ ] Decide pay-per-call price (per tool, possibly different for verdict vs. simulation)
-- [ ] Integrate OKX Payment SDK for pay-per-call billing (required for Agent-to-MCP listing)
-- [ ] Run one real end-to-end paid call through the Payment SDK to confirm billing actually works, not just wired up
-- [ ] Add rate limiting / abuse protection (someone will hammer this with garbage addresses)
-- [ ] Write clear tool descriptions/schemas so other agents can discover and call correctly — this is the actual interface other agents rely on, not just internal docs
-- [ ] End-to-end test: agent calls tool → verdict returns → attestation recorded → cache hit on repeat call
+- [x] Build MCP server exposing two tools: `get_security_verdict`, `simulate_wallet_interaction` — `mcp-server/server.py`
+- [ ] Deploy MCP server to an always-on host (VPS/container) — not localhost, must survive judge/agent calls at any hour — needs your hosting account (Fly.io/Railway/VPS), not something to provision without you
+- [ ] Set up basic uptime monitoring/alerting (e.g. a simple ping/healthcheck + notification) so you know if it goes down before OKX or a judge does — needs an external monitoring account
+- [x] Decide pay-per-call price (per tool, possibly different for verdict vs. simulation) — 10 vUSD for verdict, 20 vUSD for simulation (denominated in the deployed testnet payment token, not USD)
+- [x] Integrate OKX Payment SDK for pay-per-call billing (required for Agent-to-MCP listing) — OKX's Agent Payments Protocol is built on the open x402 standard (`pip install x402`), not a separate SDK; see `mcp-server/README.md`
+- [x] Run one real end-to-end paid call through the Payment SDK to confirm billing actually works, not just wired up — real signed Permit2 payment settled on X Layer testnet, verified via on-chain balance deltas (not just the client's self-reported flag)
+- [x] Add rate limiting / abuse protection (someone will hammer this with garbage addresses) — in-memory limiter keyed by verified payer address, tested
+- [x] Write clear tool descriptions/schemas so other agents can discover and call correctly — this is the actual interface other agents rely on, not just internal docs
+- [x] End-to-end test: agent calls tool → verdict returns → attestation recorded → cache hit on repeat call — `mcp-server/test_client.py`, confirmed cache hit on repeat call with identical `tx_hash`
+
+**Note:** OKX ASP registration/listing (to use an OKX-hosted facilitator instead of the self-hosted one built here) also needs your own OKX account and their review process — see `mcp-server/README.md` for what's self-hosted vs. what needs that.
 
 ---
 
 ## Phase 7 — Validation Pass (Day 8–9)
-- [ ] Run full pipeline against 10+ real deployed contracts per chain (mix of clean + known-exploited)
-- [ ] Check false-positive rate — a security tool that cries wolf constantly is worse than useless
-- [ ] Time each stage — confirm total latency is acceptable for a "pay-per-call, no negotiation" product
-- [ ] Fix any pipeline breakage found here before moving to submission
+- [x] Run full pipeline against 10+ real deployed contracts per chain (mix of clean + known-exploited) — 8 real, clean, Sourcify-verified mainnet contracts (7 successfully compiled) + 6 existing Phase 1/2 fixtures (3 known-bad, 3 known-good) = 14 total; scope note on why "known-exploited real contracts" specifically was descoped in `attestation/README.md`
+- [x] Check false-positive rate — a security tool that cries wolf constantly is worse than useless — **86% false positive rate found on real clean contracts (mock consensus only)**, root-caused precisely; real LLM keys are the fix, not a pipeline change — see `attestation/README.md`
+- [x] Time each stage — confirm total latency is acceptable for a "pay-per-call, no negotiation" product — avg 11.4s/call (attestation ~8.2s is the bottleneck), see `attestation/README.md` for the breakdown and the caveat that real LLM consensus will add more
+- [x] Fix any pipeline breakage found here before moving to submission — fixed a real bug: `analyze()` couldn't resolve multi-file package-style imports; added `cwd` support, confirmed fixed
 
 ---
 
 ## Phase 8 — OKX.AI Listing Submission (Day 9)
-- [ ] Draft disclaimer/liability language (verdicts are risk signals, not guarantees; users/agents should verify independently before acting) — include in tool output, README, and listing copy
-- [ ] Submit ASP for listing review at okx.ai/tutorial/asp — **do this early**, review takes time and listing approval is required for eligibility
-- [ ] Prepare listing description: clear real-world use case, both tools explained
-- [ ] Confirm listing goes live before form submission
+- [x] Draft disclaimer/liability language (verdicts are risk signals, not guarantees; users/agents should verify independently before acting) — include in tool output, README, and listing copy — in root `README.md` (Phase 0), both MCP tool descriptions (`mcp-server/server.py`), and `LISTING.md`
+- [ ] Submit ASP for listing review at okx.ai/tutorial/asp — **do this early**, review takes time and listing approval is required for eligibility — needs your own OKX account (Agentic Wallet registration, Onchain OS skill install, ASP registration), not something doable on your behalf
+- [x] Prepare listing description: clear real-world use case, both tools explained — `LISTING.md`
+- [ ] Confirm listing goes live before form submission — needs the submission above to happen first
 
 ---
 

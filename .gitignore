@@ -9,3 +9,8 @@ build/
 *.log
 
 .pnpm-store/
+__pycache__/
+*.pyc
+
+attestation/data/
+static-analysis/evm/real_contracts/

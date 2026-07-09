@@ -31,5 +31,15 @@ Unverified/bytecode-only input is handled explicitly: `analyze()` returns
 `{"static_findings": [], "insufficient_data": true}` instead of crashing or
 guessing.
 
-Not yet done: wiring this into a long-running callable service (vs. a CLI
-script) — that naturally lands with Phase 6's MCP server work.
+Wired into a long-running service via the MCP server (Phase 6) —
+`mcp-server/server.py` calls this through `attestation/full_pipeline.py`.
+
+`analyze(source_path, cwd=None)` — the optional `cwd` (added in Phase 7)
+points solc at a multi-file project's own root so package-style imports
+(`@uniswap/v3-core/...`) resolve correctly; only needed for real-world
+multi-file contracts, not single-file fixtures. See
+`evm/scripts/fetch_real_contract.py` (pulls verified source from Sourcify,
+no API key needed) and `evm/real_contracts/` (gitignored — regenerate
+rather than commit fetched third-party source) for how Phase 7's real-
+contract validation set was built; full writeup of that pass, including
+the false-positive-rate finding, is in `attestation/README.md`.
