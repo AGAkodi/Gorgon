@@ -121,6 +121,25 @@ export default function Dashboard() {
           </PillButton>
         </form>
 
+        {/* Threat Intelligence Flywheel Metrics */}
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-border bg-surface/50 px-5 py-4 backdrop-blur-xs">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Exploit Signatures</p>
+            <h4 className="mt-2 font-display text-2xl font-bold text-ink">100</h4>
+            <p className="mt-1 text-[11px] text-muted">DeFi incident database</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface/50 px-5 py-4 backdrop-blur-xs">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Autonomous Growth</p>
+            <h4 className="mt-2 font-display text-2xl font-bold text-verdict-safe">+8.5%</h4>
+            <p className="mt-1 text-[11px] text-muted">Sandbox auto-additions</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface/50 px-5 py-4 backdrop-blur-xs">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Blocked Addresses</p>
+            <h4 className="mt-2 font-display text-2xl font-bold text-ink">138</h4>
+            <p className="mt-1 text-[11px] text-muted">Threat registry size</p>
+          </div>
+        </div>
+
         {status === 'done' && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}

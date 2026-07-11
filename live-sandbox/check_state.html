@@ -1,0 +1,2051 @@
+<html><head>
+    <meta charset="UTF-8">
+    <title>E2E Test Dapp</title>
+    <link rel="icon" type="image/svg" href="metamask-fox.svg">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&amp;display=swap">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.14.1/css/mdb.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="index.css" type="text/css">
+  <style>
+      :root {
+        --w3m-color-mix-strength: 0%;
+        --w3m-font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+        --w3m-font-size-master: 10px;
+        --w3m-border-radius-master: 4px;
+        --w3m-z-index: 100;
+
+        --wui-font-family: var(--w3m-font-family);
+
+        --wui-font-size-micro: var(--w3m-font-size-master);
+        --wui-font-size-tiny: calc(var(--w3m-font-size-master) * 1.2);
+        --wui-font-size-small: calc(var(--w3m-font-size-master) * 1.4);
+        --wui-font-size-paragraph: calc(var(--w3m-font-size-master) * 1.6);
+        --wui-font-size-large: calc(var(--w3m-font-size-master) * 2);
+
+        --wui-border-radius-5xs: var(--w3m-border-radius-master);
+        --wui-border-radius-4xs: calc(var(--w3m-border-radius-master) * 1.5);
+        --wui-border-radius-3xs: calc(var(--w3m-border-radius-master) * 2);
+        --wui-border-radius-xxs: calc(var(--w3m-border-radius-master) * 3);
+        --wui-border-radius-xs: calc(var(--w3m-border-radius-master) * 4);
+        --wui-border-radius-s: calc(var(--w3m-border-radius-master) * 5);
+        --wui-border-radius-m: calc(var(--w3m-border-radius-master) * 7);
+        --wui-border-radius-l: calc(var(--w3m-border-radius-master) * 9);
+        --wui-border-radius-3xl: calc(var(--w3m-border-radius-master) * 20);
+
+        --wui-font-weight-light: 400;
+        --wui-font-weight-regular: 500;
+        --wui-font-weight-medium: 600;
+        --wui-font-weight-bold: 700;
+
+        --wui-letter-spacing-large: -0.8px;
+        --wui-letter-spacing-paragraph: -0.64px;
+        --wui-letter-spacing-small: -0.56px;
+        --wui-letter-spacing-tiny: -0.48px;
+        --wui-letter-spacing-micro: -0.2px;
+
+        --wui-spacing-0: 0px;
+        --wui-spacing-4xs: 2px;
+        --wui-spacing-3xs: 4px;
+        --wui-spacing-xxs: 6px;
+        --wui-spacing-2xs: 7px;
+        --wui-spacing-xs: 8px;
+        --wui-spacing-1xs: 10px;
+        --wui-spacing-s: 12px;
+        --wui-spacing-m: 14px;
+        --wui-spacing-l: 16px;
+        --wui-spacing-2l: 18px;
+        --wui-spacing-xl: 20px;
+        --wui-spacing-xxl: 24px;
+        --wui-spacing-2xl: 32px;
+        --wui-spacing-3xl: 40px;
+        --wui-spacing-4xl: 90px;
+
+        --wui-icon-box-size-xs: 20px;
+        --wui-icon-box-size-sm: 24px;
+        --wui-icon-box-size-md: 32px;
+        --wui-icon-box-size-lg: 40px;
+
+        --wui-icon-size-inherit: inherit;
+        --wui-icon-size-xxs: 10px;
+        --wui-icon-size-xs: 12px;
+        --wui-icon-size-sm: 14px;
+        --wui-icon-size-md: 16px;
+        --wui-icon-size-mdl: 18px;
+        --wui-icon-size-lg: 20px;
+
+        --wui-wallet-image-size-inherit: inherit;
+        --wui-wallet-image-size-sm: 40px;
+        --wui-wallet-image-size-md: 56px;
+        --wui-wallet-image-size-lg: 80px;
+
+        --wui-box-size-md: 100px;
+        --wui-box-size-lg: 120px;
+
+        --wui-ease-out-power-2: cubic-bezier(0, 0, 0.22, 1);
+        --wui-ease-out-power-1: cubic-bezier(0, 0, 0.55, 1);
+
+        --wui-ease-in-power-3: cubic-bezier(0.66, 0, 1, 1);
+        --wui-ease-in-power-2: cubic-bezier(0.45, 0, 1, 1);
+        --wui-ease-in-power-1: cubic-bezier(0.3, 0, 1, 1);
+
+        --wui-ease-inout-power-1: cubic-bezier(0.45, 0, 0.55, 1);
+
+        --wui-duration-lg: 200ms;
+        --wui-duration-md: 125ms;
+        --wui-duration-sm: 75ms;
+
+        --wui-path-network: path(
+          'M43.4605 10.7248L28.0485 1.61089C25.5438 0.129705 22.4562 0.129705 19.9515 1.61088L4.53951 10.7248C2.03626 12.2051 0.5 14.9365 0.5 17.886V36.1139C0.5 39.0635 2.03626 41.7949 4.53951 43.2752L19.9515 52.3891C22.4562 53.8703 25.5438 53.8703 28.0485 52.3891L43.4605 43.2752C45.9637 41.7949 47.5 39.0635 47.5 36.114V17.8861C47.5 14.9365 45.9637 12.2051 43.4605 10.7248Z'
+        );
+
+        --wui-path-network-lg: path(
+          'M78.3244 18.926L50.1808 2.45078C45.7376 -0.150261 40.2624 -0.150262 35.8192 2.45078L7.6756 18.926C3.23322 21.5266 0.5 26.3301 0.5 31.5248V64.4752C0.5 69.6699 3.23322 74.4734 7.6756 77.074L35.8192 93.5492C40.2624 96.1503 45.7376 96.1503 50.1808 93.5492L78.3244 77.074C82.7668 74.4734 85.5 69.6699 85.5 64.4752V31.5248C85.5 26.3301 82.7668 21.5266 78.3244 18.926Z'
+        );
+
+        --wui-color-inherit: inherit;
+
+        --wui-color-inverse-100: #fff;
+        --wui-color-inverse-000: #000;
+
+        --wui-cover: rgba(0, 0, 0, 0.3);
+
+        --wui-color-modal-bg: var(--wui-color-modal-bg-base);
+
+        --wui-color-blue-100: var(--wui-color-blue-base-100);
+        --wui-color-blue-015: var(--wui-color-accent-base-015);
+
+        --wui-color-accent-100: var(--wui-color-accent-base-100);
+        --wui-color-accent-090: var(--wui-color-accent-base-090);
+        --wui-color-accent-080: var(--wui-color-accent-base-080);
+
+        --wui-accent-glass-090: var(--wui-accent-glass-base-090);
+        --wui-accent-glass-080: var(--wui-accent-glass-base-080);
+        --wui-accent-glass-020: var(--wui-accent-glass-base-020);
+        --wui-accent-glass-015: var(--wui-accent-glass-base-015);
+        --wui-accent-glass-010: var(--wui-accent-glass-base-010);
+        --wui-accent-glass-005: var(--wui-accent-glass-base-005);
+        --wui-accent-glass-002: var(--wui-accent-glass-base-002);
+
+        --wui-color-fg-100: var(--wui-color-fg-base-100);
+        --wui-color-fg-125: var(--wui-color-fg-base-125);
+        --wui-color-fg-150: var(--wui-color-fg-base-150);
+        --wui-color-fg-175: var(--wui-color-fg-base-175);
+        --wui-color-fg-200: var(--wui-color-fg-base-200);
+        --wui-color-fg-225: var(--wui-color-fg-base-225);
+        --wui-color-fg-250: var(--wui-color-fg-base-250);
+        --wui-color-fg-275: var(--wui-color-fg-base-275);
+        --wui-color-fg-300: var(--wui-color-fg-base-300);
+
+        --wui-color-bg-100: var(--wui-color-bg-base-100);
+        --wui-color-bg-125: var(--wui-color-bg-base-125);
+        --wui-color-bg-150: var(--wui-color-bg-base-150);
+        --wui-color-bg-175: var(--wui-color-bg-base-175);
+        --wui-color-bg-200: var(--wui-color-bg-base-200);
+        --wui-color-bg-225: var(--wui-color-bg-base-225);
+        --wui-color-bg-250: var(--wui-color-bg-base-250);
+        --wui-color-bg-275: var(--wui-color-bg-base-275);
+        --wui-color-bg-300: var(--wui-color-bg-base-300);
+
+        --wui-color-success-100: var(--wui-color-success-base-100);
+        --wui-color-error-100: var(--wui-color-error-base-100);
+
+        --wui-icon-box-bg-error-100: var(--wui-icon-box-bg-error-base-100);
+        --wui-icon-box-bg-blue-100: var(--wui-icon-box-bg-blue-base-100);
+        --wui-icon-box-bg-success-100: var(--wui-icon-box-bg-success-base-100);
+        --wui-icon-box-bg-inverse-100: var(--wui-icon-box-bg-inverse-base-100);
+
+        --wui-all-wallets-bg-100: var(--wui-all-wallets-bg-base-100);
+
+        --wui-avatar-border: var(--wui-avatar-border-base);
+
+        --wui-thumbnail-border: var(--wui-thumbnail-border-base);
+
+        --wui-box-shadow-blue: rgba(71, 161, 255, 0.16);
+      }
+
+      @supports (background: color-mix(in srgb, white 50%, black)) {
+        :root {
+          --wui-color-modal-bg: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-modal-bg-base)
+          );
+
+          --wui-box-shadow-blue: color-mix(in srgb, var(--wui-color-accent-100) 16%, transparent);
+
+          --wui-color-accent-090: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 90%,
+            var(--w3m-default)
+          );
+          --wui-color-accent-080: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 80%,
+            var(--w3m-default)
+          );
+
+          --wui-color-accent-090: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 90%,
+            transparent
+          );
+          --wui-color-accent-080: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 80%,
+            transparent
+          );
+
+          --wui-accent-glass-090: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 90%,
+            transparent
+          );
+          --wui-accent-glass-080: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 80%,
+            transparent
+          );
+          --wui-accent-glass-020: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 20%,
+            transparent
+          );
+          --wui-accent-glass-015: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 15%,
+            transparent
+          );
+          --wui-accent-glass-010: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 10%,
+            transparent
+          );
+          --wui-accent-glass-005: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 5%,
+            transparent
+          );
+          --wui-color-accent-002: color-mix(
+            in srgb,
+            var(--wui-color-accent-base-100) 2%,
+            transparent
+          );
+
+          --wui-color-fg-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-100)
+          );
+          --wui-color-fg-125: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-125)
+          );
+          --wui-color-fg-150: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-150)
+          );
+          --wui-color-fg-175: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-175)
+          );
+          --wui-color-fg-200: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-200)
+          );
+          --wui-color-fg-225: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-225)
+          );
+          --wui-color-fg-250: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-250)
+          );
+          --wui-color-fg-275: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-275)
+          );
+          --wui-color-fg-300: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-fg-base-300)
+          );
+
+          --wui-color-bg-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-100)
+          );
+          --wui-color-bg-125: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-125)
+          );
+          --wui-color-bg-150: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-150)
+          );
+          --wui-color-bg-175: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-175)
+          );
+          --wui-color-bg-200: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-200)
+          );
+          --wui-color-bg-225: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-225)
+          );
+          --wui-color-bg-250: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-250)
+          );
+          --wui-color-bg-275: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-275)
+          );
+          --wui-color-bg-300: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-bg-base-300)
+          );
+
+          --wui-color-success-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-success-base-100)
+          );
+          --wui-color-error-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-color-error-base-100)
+          );
+
+          --wui-icon-box-bg-error-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-icon-box-bg-error-base-100)
+          );
+          --wui-icon-box-bg-accent-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-icon-box-bg-blue-base-100)
+          );
+          --wui-icon-box-bg-success-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-icon-box-bg-success-base-100)
+          );
+          --wui-icon-box-bg-inverse-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-icon-box-bg-inverse-base-100)
+          );
+
+          --wui-all-wallets-bg-100: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-all-wallets-bg-base-100)
+          );
+
+          --wui-avatar-border: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-avatar-border-base)
+          );
+
+          --wui-thumbnail-border: color-mix(
+            in srgb,
+            var(--w3m-color-mix) var(--w3m-color-mix-strength),
+            var(--wui-thumbnail-border-base)
+          );
+        }
+      }
+    </style><style media="enabled">
+      :root {
+        --w3m-color-mix: #000;
+        --w3m-accent: #3396ff;
+        --w3m-default: #000;
+
+        --wui-color-modal-bg-base: #fff;
+
+        --wui-color-blue-base-100: #3396ff;
+
+        --wui-color-accent-base-100: var(--w3m-accent);
+        --wui-color-accent-base-090: #2d7dd2;
+        --wui-color-accent-base-080: #2978cc;
+
+        --wui-accent-glass-base-090: rgba(51, 150, 255, 0.9);
+        --wui-accent-glass-base-080: rgba(51, 150, 255, 0.8);
+        --wui-accent-glass-base-020: rgba(51, 150, 255, 0.2);
+        --wui-accent-glass-base-015: rgba(51, 150, 255, 0.15);
+        --wui-accent-glass-base-010: rgba(51, 150, 255, 0.1);
+        --wui-accent-glass-base-005: rgba(51, 150, 255, 0.05);
+        --wui-accent-glass-base-002: rgba(51, 150, 255, 0.02);
+
+        --wui-color-fg-base-100: #141414;
+        --wui-color-fg-base-125: #2d3131;
+        --wui-color-fg-base-150: #474d4d;
+        --wui-color-fg-base-175: #636d6d;
+        --wui-color-fg-base-200: #798686;
+        --wui-color-fg-base-225: #828f8f;
+        --wui-color-fg-base-250: #8b9797;
+        --wui-color-fg-base-275: #95a0a0;
+        --wui-color-fg-base-300: #9ea9a9;
+
+        --wui-color-bg-base-100: #ffffff;
+        --wui-color-bg-base-125: #f5fafa;
+        --wui-color-bg-base-150: #f3f8f8;
+        --wui-color-bg-base-175: #eef4f4;
+        --wui-color-bg-base-200: #eaf1f1;
+        --wui-color-bg-base-225: #e5eded;
+        --wui-color-bg-base-250: #e1e9e9;
+        --wui-color-bg-base-275: #dce7e7;
+        --wui-color-bg-base-300: #d8e3e3;
+
+        --wui-color-success-base-100: #26b562;
+        --wui-color-error-base-100: #f05142;
+
+        --wui-icon-box-bg-error-base-100: #f4dfdd;
+        --wui-icon-box-bg-blue-base-100: #d9ecfb;
+        --wui-icon-box-bg-success-base-100: #daf0e4;
+        --wui-icon-box-bg-inverse-base-100: #dcecfc;
+
+        --wui-all-wallets-bg-base-100: #e8f1fa;
+
+        --wui-avatar-border-base: #f3f4f4;
+
+        --wui-thumbnail-border-base: #eaefef;
+
+        --wui-gray-glass-001: rgba(0, 0, 0, 0.01);
+        --wui-gray-glass-002: rgba(0, 0, 0, 0.02);
+        --wui-gray-glass-005: rgba(0, 0, 0, 0.05);
+        --wui-gray-glass-010: rgba(0, 0, 0, 0.1);
+        --wui-gray-glass-015: rgba(0, 0, 0, 0.15);
+        --wui-gray-glass-020: rgba(0, 0, 0, 0.2);
+        --wui-gray-glass-025: rgba(0, 0, 0, 0.25);
+        --wui-gray-glass-030: rgba(0, 0, 0, 0.3);
+        --wui-gray-glass-060: rgba(0, 0, 0, 0.6);
+        --wui-gray-glass-080: rgba(0, 0, 0, 0.8);
+      }
+    </style><style>
+      :root {
+        --w3m-color-mix: #fff;
+        --w3m-accent: #47a1ff;
+        --w3m-default: #fff;
+
+        --wui-color-modal-bg-base: #191a1a;
+
+        --wui-color-blue-base-100: #47a1ff;
+
+        --wui-color-accent-base-100: var(--w3m-accent);
+        --wui-color-accent-base-090: #59aaff;
+        --wui-color-accent-base-080: #6cb4ff;
+
+        --wui-accent-glass-base-090: rgba(71, 161, 255, 0.9);
+        --wui-accent-glass-base-080: rgba(71, 161, 255, 0.8);
+        --wui-accent-glass-base-020: rgba(71, 161, 255, 0.2);
+        --wui-accent-glass-base-015: rgba(71, 161, 255, 0.15);
+        --wui-accent-glass-base-010: rgba(71, 161, 255, 0.1);
+        --wui-accent-glass-base-005: rgba(71, 161, 255, 0.05);
+        --wui-accent-glass-base-002: rgba(71, 161, 255, 0.02);
+
+        --wui-color-fg-base-100: #e4e7e7;
+        --wui-color-fg-base-125: #d0d5d5;
+        --wui-color-fg-base-150: #a8b1b1;
+        --wui-color-fg-base-175: #a8b0b0;
+        --wui-color-fg-base-200: #949e9e;
+        --wui-color-fg-base-225: #868f8f;
+        --wui-color-fg-base-250: #788080;
+        --wui-color-fg-base-275: #788181;
+        --wui-color-fg-base-300: #6e7777;
+
+        --wui-color-bg-base-100: #141414;
+        --wui-color-bg-base-125: #191a1a;
+        --wui-color-bg-base-150: #1e1f1f;
+        --wui-color-bg-base-175: #222525;
+        --wui-color-bg-base-200: #272a2a;
+        --wui-color-bg-base-225: #2c3030;
+        --wui-color-bg-base-250: #313535;
+        --wui-color-bg-base-275: #363b3b;
+        --wui-color-bg-base-300: #3b4040;
+
+        --wui-color-success-base-100: #26d962;
+        --wui-color-error-base-100: #f25a67;
+
+        --wui-icon-box-bg-error-base-100: #3c2426;
+        --wui-icon-box-bg-blue-base-100: #20303f;
+        --wui-icon-box-bg-success-base-100: #1f3a28;
+        --wui-icon-box-bg-inverse-base-100: #243240;
+
+        --wui-all-wallets-bg-base-100: #222b35;
+
+        --wui-avatar-border-base: #252525;
+
+        --wui-thumbnail-border-base: #252525;
+
+        --wui-gray-glass-001: rgba(255, 255, 255, 0.01);
+        --wui-gray-glass-002: rgba(255, 255, 255, 0.02);
+        --wui-gray-glass-005: rgba(255, 255, 255, 0.05);
+        --wui-gray-glass-010: rgba(255, 255, 255, 0.1);
+        --wui-gray-glass-015: rgba(255, 255, 255, 0.15);
+        --wui-gray-glass-020: rgba(255, 255, 255, 0.2);
+        --wui-gray-glass-025: rgba(255, 255, 255, 0.25);
+        --wui-gray-glass-030: rgba(255, 255, 255, 0.3);
+        --wui-gray-glass-060: rgba(255, 255, 255, 0.6);
+        --wui-gray-glass-080: rgba(255, 255, 255, 0.8);
+      }
+    </style></head>
+
+  <body>
+    <main class="container-fluid">
+      <header>
+        <div id="logo-container">
+          <h1 id="logo-text" class="text-center">
+            E2E Test Dapp
+          </h1>
+
+          <img id="mm-logo" src="metamask-fox.svg">
+        </div>
+      </header>
+      <section>
+        <h3 class="card-title">
+          Provider
+        </h3>
+        <div id="eip6963Warning" class="row justify-content-center" hidden="">
+          <div class="warning-message justify-content-center col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+            <img src="warning.svg" alt="" class="warning-message-icon
+              ">
+            <div class="warning-message-text">No EIP-6963 Provider Detected</div>
+          </div>
+        </div>
+        <div class="row" id="eip6963">
+          <div class="col-xl-8 col-lg-6 col-md-12 col-sm-12 col-12">
+            <div class="card eip6963-providers">
+              <div class="card-body">
+                <h4 class="card-title">
+                  EIP 6963
+                </h4>
+                  <div class="row" id="providers"><div id="provider" class="col-xl-6 col-lg-6 col-md-12 col-sm-12 col-12"><pre class="alert alert-secondary">{<br>  "info": {<br>    "uuid": "vetra-sandbox-0001",<br>    "name": "Vetra Sandbox Wallet",<br>    "icon": "data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg'/&gt;",<br>    "rdns": "dev.vetra.sandbox"<br>  },<br>  "provider": "..."<br>}</pre><button class="btn btn-primary btn-lg btn-block mb-3">Use Vetra Sandbox Wallet</button></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+            <div class="card">
+              <div class="card-body">
+                <h4 class="card-title">
+                  Active Provider
+                </h4>
+                <p class="info-text alert alert-secondary">
+                  UUID: <span id="activeProviderUUID">vetra-sandbox-0001</span>
+                </p>
+                <p class="info-text alert alert-secondary">
+                  Name: <span id="activeProviderName">Vetra Sandbox Wallet</span>
+                </p>
+                <p class="info-text alert alert-secondary">
+                  Icon: <span id="activeProviderIcon"><img src="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg'/&gt;" height="90" width="90"></span>
+                </p>
+              </div>
+            </div>
+              <button class="btn btn-primary btn-lg btn-block mb-3" id="useWindowProviderButton">
+              Use window.ethereum
+          </button></div>
+      </div></section>
+      <section>
+        <h3 class="card-title">
+          Status
+        </h3>
+        <div id="warning" class="row justify-content-center error-div">
+          <div class="error-message justify-content-center col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+            <img src="alert-red.svg" alt="" class="error-message-icon
+              ">
+            <div class="error-message-text">You are on the Ethereum Mainnet.</div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+            <p class="info-text alert alert-primary">
+              Network: <span id="network">1</span>
+            </p>
+          </div>
+
+          <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+            <p class="info-text alert alert-secondary">
+              ChainId: <span id="chainId">0x1</span>
+            </p>
+          </div>
+
+          <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+            <p class="info-text alert alert-success">
+              Accounts: <span id="accounts">0x0d3c000000000000000000000000000000f00001</span>
+            </p>
+          </div>
+        </div>
+      </section>
+    <section><div class="row d-flex justify-content-center"><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            Connect Actions
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="connectButton" disabled="">Connected</button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="walletConnect">
+          Wallet Connect
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sdkConnect">
+          SDK Connect
+          </button>
+          <hr>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="getAccounts">
+            eth_accounts
+          </button>
+
+          <p class="info-text alert alert-secondary">
+            eth_accounts result: <span id="getAccountsResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            Permissions Actions
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="requestPermissions">
+            Request Permissions
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="getPermissions">
+            Get Permissions
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="revokeAccountsPermission">
+            Revoke Accounts Permission
+          </button>
+
+          <p class="info-text alert alert-secondary">
+            Permissions result: <span id="permissionsResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">
+            Network Picker
+          </h4>
+          <button id="openNetworkPicker" class="btn btn-outline-primary btn-lg btn-block mb-3">
+            <span id="currentNetworkName">Current Network: Ethereum Mainnet</span>
+            <i class="fas fa-chevron-down ml-2"></i>
+          </button>
+        </div>
+      </div>
+    </div></div></section><section><div class="row"><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+        <div class="card full-width">
+            <div class="card-body">
+            <h4 class="card-title">
+                Send Eth
+            </h4>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="sendButton">
+                Send
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="sendEIP1559Button" disabled="" hidden="">
+                Send EIP 1559 Transaction
+            </button>
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="sendEIP1559WithoutGasButton" disabled="" hidden="">
+                Send EIP 1559 Without Gas
+            </button>
+            <a id="sendDeeplinkButton" href="https://metamask.app.link/send/0x0c54FcCd2e384b4BB6f2E405Bf5Cbc15a017AaFb?value=0">
+                <button class="btn btn-warning btn-lg btn-block mb-3 text-dark">
+                (Mobile) Send with Deeplink
+                </button>
+            </a>
+            <hr>
+            <h4 class="card-title">
+                Piggy bank contract
+            </h4>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="deployButton">
+                Deploy Contract
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="depositButton" disabled="">
+                Deposit
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="withdrawButton" disabled="">
+                Withdraw
+            </button>
+
+            <p class="info-text alert alert-secondary">
+                Contract Status: <span id="contractStatus">Not clicked</span>
+            </p>
+            <hr>
+            <h4 class="card-title">
+                Failing contract
+            </h4>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="deployFailingButton">
+                Deploy Failing Contract
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="sendFailingButton" disabled="">
+                Send Failing Transaction
+            </button>
+
+            <p class="info-text alert alert-secondary">
+                Failing Contract Status: <span id="failingContractStatus">Not clicked</span>
+            </p>
+            <hr>
+            <h4 class="card-title">
+                Multisig contract
+            </h4>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="deployMultisigButton">
+                Deploy Multisig Contract
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="sendMultisigButton" disabled="">
+                Send ETH to Multisig Address
+            </button>
+
+            <p class="info-text alert alert-secondary">
+                Multisig Contract Status: <span id="multisigContractStatus">Not clicked</span>
+            </p>
+            <hr>
+            <div class="contract-interaction-section">
+                <h4 class="card-title">Heavy Hex Data</h4>
+                <p>⚠️ WARNING: this can significantly degradate your wallet performance</p>
+                <button class="btn btn-primary btn-lg btn-block mb-3" id="sendHeavyHexDataButton">
+                    Send with heavy hex data
+                </button>
+            </div>
+            </div>
+        </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+            ERC 20
+          </h4>
+
+          <p class="info-text alert alert-success">
+            Token(s): <span id="erc20TokenAddresses"></span>
+          </p>
+
+          <div class="form-group">
+            <label>Token Decimals</label>
+            <input class="form-control" type="number" id="tokenDecimals" value="4" max="18" min="0">
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="createToken">
+            Create Token
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="watchAssets" disabled="">
+            Add Token(s) to Wallet
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="transferTokens" disabled="">
+            Transfer Tokens
+          </button>
+
+          <a id="transferTokensDeeplink" href="https://metamask.app.link/send//transfer?address=0x2f318C334780961FB129D2a6c30D0763d9a5C970&amp;uint256=4e18">
+            <button class="btn btn-warning btn-lg btn-block mb-3 text-dark">
+            (Mobile) Transfer Tokens with Deeplink
+            </button>
+          </a>
+
+          <hr>
+          <div class="form-group">
+            <label>Approve to Address</label>
+            <input class="form-control" id="approveTo" value="0x9bc5baF874d2DA8D216aE9f137804184EE5AfEF4" disabled="">
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="approveTokens" disabled="">
+            Approve Tokens
+          </button>
+          <a id="approveTokensDeeplink" href="https://metamask.app.link/approve//approve?address=0x178e3e6c9f547A00E33150F7104427ea02cfc747&amp;uint256=3e18">
+            <button class="btn btn-warning btn-lg btn-block mb-3 text-dark">
+            (Mobile) Approve Tokens with Deeplink
+            </button>
+          </a>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="increaseTokenAllowance" disabled="">
+            Increase Token Allowance
+          </button>
+
+          <hr>
+          <div class="form-group">
+            <label>Owner Address</label>
+            <input class="form-control" id="allowanceOwner" disabled="">
+          </div>
+
+          <div class="form-group">
+            <label>Spender Address</label>
+            <input class="form-control" id="allowanceSpender" disabled="">
+          </div>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="getAllowance" disabled="">
+            Get Allowance
+          </button>
+          <p class="info-text alert alert-secondary">
+            Allowance amount: <span id="allowanceAmountResult"></span>
+          </p>
+          <hr>
+          <div class="form-group">
+            <label>Transfer From</label>
+            <input class="form-control" id="transferFromSenderInput" disabled="">
+          </div>
+
+          <div class="form-group">
+            <label>Transfer To</label>
+            <input class="form-control" id="transferFromRecipientInput" disabled="">
+          </div>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="transferFromTokens" disabled="">
+            Transfer From Tokens
+          </button>
+          <hr>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="transferTokensWithoutGas" disabled="">
+            Transfer Tokens Without Gas
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="approveTokensWithoutGas" disabled="">
+            Approve Tokens Without Gas
+          </button>
+
+          <p class="info-text alert alert-secondary">
+            ERC 20 methods result: <span id="tokenMethodsResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+            ERC 721
+          </h4>
+
+          <p class="info-text alert alert-success">
+            Token(s): <span id="erc721TokenAddresses"></span>
+          </p>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="deployNFTsButton">
+            Deploy
+          </button>
+
+          <div class="form-group">
+            <label>Amount</label>
+            <input class="form-control" type="number" id="mintAmountInput" value="1" disabled="">
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="mintButton" disabled="">
+              Mint
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label>Watch NFT</label>
+            <input class="form-control" type="number" id="watchNFTInput" value="1" disabled="">
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="watchNFTButton" disabled="">
+              Watch NFT
+            </button>
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="watchNFTsButton" disabled="">
+              Watch all NFTs
+            </button>
+          </div>
+
+          <div class="form-group" id="watchNFTButtons">
+          </div>
+
+          <div class="form-group">
+            <label>Approve Token</label>
+            <input class="form-control" type="number" id="approveTokenInput" value="1" disabled="">
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="approveButton" disabled="">
+              Approve
+            </button>
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="setApprovalForAllButton" disabled="">
+              Set Approval For All
+            </button>
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="revokeButton" disabled="">
+              Revoke
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label>Transfer Token</label>
+            <input class="form-control" type="number" id="transferTokenInput" value="1" disabled="">
+          </div>
+
+          <div class="form-group">
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="transferFromButton" disabled="">
+              Transfer From
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label>NFT Permit</label>
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="sign721Permit" disabled="">
+              Sign
+            </button>
+
+            <p class="info-text alert alert-warning">
+              Result:
+              <span id="sign721PermitResult"></span>
+              </p><p class="info-text alert alert-warning" id="sign721PermitResultR">r: </p>
+              <p class="info-text alert alert-warning" id="sign721PermitResultS">s: </p>
+              <p class="info-text alert alert-warning" id="sign721PermitResultV">v: </p>
+            <p></p>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="sign721PermitVerify" disabled="">
+              Verify
+            </button>
+
+            <p class="info-text alert alert-warning">
+              Recovery result:
+              <span id="sign721PermitVerifyResult"></span>
+            </p>
+          </div>
+
+          <p class="info-text alert alert-secondary">
+            ERC 721 methods result: <span id="nftsStatus"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+            ERC 1155
+          </h4>
+
+          <p class="info-text alert alert-success">
+            Token(s): <span id="erc1155TokenAddresses"></span>
+          </p>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="deployERC1155Button">
+          Deploy
+        </button>
+
+        <div class="form-group">
+          <label>Batch Mint Token IDs</label>
+          <input class="form-control" type="text" placeholder="1, 2, 3" id="batchMintTokenIds">
+        </div>
+
+        <div class="form-group">
+          <label>Batch Mint Token ID Amounts</label>
+          <input class="form-control" type="text" placeholder="1, 1, 1000000000000000" id="batchMintIdAmounts">
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="batchMintButton" disabled="">
+            Batch Mint
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Batch Transfer Token IDs</label>
+          <input class="form-control" type="text" placeholder="1, 2, 3" id="batchTransferTokenIds" disabled="">
+        </div>
+
+        <div class="form-group">
+          <label>Batch Transfer Token Amounts</label>
+          <input class="form-control" type="text" placeholder="1, 1, 1" id="batchTransferTokenAmounts" disabled="">
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="batchTransferFromButton" disabled="">
+            Batch Transfer
+          </button>
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="setApprovalForAllERC1155Button" disabled="">
+            Set Approval For All
+          </button>
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="revokeERC1155Button" disabled="">
+            Revoke
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Watch ERC1155 Token ID</label>
+          <input class="form-control" type="text" value="1" id="watchAssetInput" disabled="">
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="watchAssetButton" disabled="">
+            Watch ERC1155 Asset
+          </button>
+        </div>
+
+        <p class="info-text alert alert-secondary">
+          ERC 1155 methods results: <span id="erc1155Status"></span>
+        </p>
+      </div>
+    </div>
+  </div>      <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+        <div class="card full-width">
+          <div class="card-body">
+            <h4 class="card-title">
+              EIP 747
+            </h4>
+
+            <div class="form-group">
+              <label>ERC20 Token Address</label>
+              <input class="form-control" type="text" placeholder="0x..." id="eip747ContractAddress">
+            </div>
+
+            <div class="form-group">
+              <label>Symbol</label>
+              <input class="form-control" type="text" placeholder="XYZ" id="eip747Symbol">
+            </div>
+
+            <div class="form-group">
+              <label>Decimals</label>
+              <input class="form-control" type="number" placeholder="18" id="eip747Decimals">
+            </div>
+
+            <div class="form-group">
+              <button class="btn btn-primary btn-lg btn-block mb-3" id="eip747WatchButton">
+                Add Token
+              </button>
+            </div>
+
+            <p class="info-text alert alert-secondary">
+              EIP 747: <span id="eip747Status"></span>
+            </p>
+          </div>
+        </div>
+      </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+        <div class="card full-width">
+            <div class="card-body eip5792">
+                <h4 class="card-title">
+                    EIP 5792
+                </h4>
+                <div id="eip5792SendCalls"><button class="btn btn-primary btn-lg btn-block mb-3" id="eip5792SendCallsEdit">
+        Edit Request
+    </button>
+    
+    <div class="form-group" id="eip5792FromContainer" hidden="">
+        <label>From</label>
+        <input class="form-control" type="text" id="eip5792From">
+    </div>
+
+    <div class="form-group" id="eip5792ChainIdContainer" hidden="">
+        <label>Chain ID</label>
+        <input class="form-control" type="text" id="eip5792ChainId">
+    </div>
+
+    <div id="eip5792Calls"></div>
+
+    <button class="btn btn-primary btn-lg btn-block mb-3" id="eip5792AddCall" hidden="">
+        Add Call
+    </button>
+
+    <button class="btn btn-primary btn-lg btn-block mb-3" id="eip5792SendCallsButton">
+        Send Calls
+    </button>
+
+     <button class="btn btn-primary btn-lg btn-block mb-3" id="eip5792SendCallsApprovalButton">
+        Send Calls - Multiple Approvals
+    </button>
+
+    <button class="btn btn-primary btn-lg btn-block mb-3" id="eip5792SendCallsRequiredAssetsButton">
+        Send Calls - Required Assets
+    </button>
+
+    <p class="info-text alert alert-warning" id="eip5792SendCallsErrorContainer" hidden="">
+        <span class="wrap" id="eip5792SendCallsError"></span>
+    </p></div>
+                <hr>
+                <div id="eip5792GetCallsStatus"><div class="form-group">
+        <label>Request ID</label>
+        <input class="form-control" type="text" id="eip5792RequestIdInput">
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block mb-3" id="eip5792GetCallsStatusButton">
+        Get Calls Status
+    </button>
+
+    <p class="info-text alert alert-success">
+        <span class="wrap" id="eip5792GetCallsStatusResult">Status</span>
+    </p></div>
+                <hr>
+                <div id="eip5792GetCapabilities"><div class="form-group">
+        <label>Account</label>
+        <input class="form-control" type="text" id="eip5792AccountInput">
+    </div>
+    <div class="form-group">
+        <label>Chain IDs</label>
+        <input class="form-control" type="text" id="eip5792ChainIdsInput">
+    </div>
+
+    <button class="btn btn-primary btn-lg btn-block mb-3" id="eip5792GetCapabilitiesButton">
+        Get Capabilities
+    </button>
+
+    <p class="info-text alert alert-success">
+        <span class="wrap" id="eip5792GetCapabilitiesResult">Status</span>
+    </p></div>
+            </div>
+        </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+        <div class="card full-width">
+            <div class="card-body">
+            <h4 class="card-title">
+                Swap Comparison (High Fee Test - Mainnet only)
+            </h4>
+
+            <p class="info-text alert alert-warning">
+                ⚠️ This swap includes a high fee for testing purposes
+            </p>
+
+            <div class="alert alert-secondary">
+                <strong>Current Swap Details:</strong><br>
+                <span id="swapDetailsDisplay">
+                • From: <span id="displayEthAmount">0.0003</span> ETH<br>
+                • To: USDC<br>
+                • Fee: <span id="displayFeePercentage">50</span>% of output
+                </span>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="card mb-3" style="background-color: #f8f9fa;">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3 text-muted">
+                        <strong>Configuration (Optional)</strong>
+                    </h6>
+
+                    <div class="form-group mb-3">
+                        <label for="ethAmountInput" style="font-size: 0.9em;">
+                            <strong>ETH Amount</strong>
+                        </label>
+                        <input type="number" class="form-control" id="ethAmountInput" placeholder="0.0003" step="0.0001" min="0" style="font-size: 0.9em;">
+                        <small class="form-text text-muted">Leave empty for default (0.0003 ETH)</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="feePercentageInput" style="font-size: 0.9em;">
+                            <strong>Fee Percentage</strong>
+                        </label>
+                        <input type="number" class="form-control" id="feePercentageInput" placeholder="50" step="1" min="0" max="100" style="font-size: 0.9em;">
+                        <small class="form-text text-muted">Leave empty for default (50%)</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="feeRecipientInput" style="font-size: 0.9em;">
+                            <strong>Fee Recipient Address</strong>
+                        </label>
+                        <input type="text" class="form-control" id="feeRecipientInput" placeholder="0x58c51ee8998e8ef06362df26a0d966bbd0cf5113" style="font-size: 0.85em; font-family: monospace;">
+                        <small class="form-text text-muted">Leave empty for default address</small>
+                    </div>
+
+                    <button class="btn btn-sm btn-secondary btn-block" id="resetConfigButton">
+                        Reset to Defaults
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="swapComparisonSwapButton">
+                Swap ETH to USDC
+            </button>
+
+            <p class="info-text alert alert-secondary">
+                Status: <span id="swapStatus">Not executed</span>
+            </p>
+
+            <p class="info-text alert alert-secondary" style="word-break: break-all;">
+                Transaction Hash: <span id="swapTxHash">-</span>
+            </p>
+            </div>
+        </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+        <div class="card full-width">
+            <div class="card-body">
+            <h4 class="card-title">
+                Batch USDC → ETH Swap (Mainnet only)
+            </h4>
+
+            <p class="info-text alert alert-warning">
+                ⚠️ Atomic batch via EIP-5792 wallet_sendCalls
+            </p>
+
+            <div class="alert alert-secondary">
+                <strong>Current Swap Details:</strong><br>
+                <span id="batchUsdcSwapDetailsDisplay">
+                • From: <span id="displayUsdcAmount">0.5</span> USDC<br>
+                • To: ETH<br>
+                • Fee: <span id="displayBatchFeePercentage">50</span>% of output<br>
+                • Approvals: Exact amount only<br>
+                • Slippage: No protection (amountOutMin = 0)
+                </span>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="card mb-3" style="background-color: #f8f9fa;">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-3 text-muted">
+                        <strong>Configuration (Optional)</strong>
+                    </h6>
+
+                    <div class="form-group mb-3">
+                        <label for="batchUsdcSwapAmount" style="font-size: 0.9em;">
+                            <strong>USDC Amount</strong>
+                        </label>
+                        <input type="number" class="form-control" id="batchUsdcSwapAmount" placeholder="0.5" step="0.01" min="0" style="font-size: 0.9em;">
+                        <small class="form-text text-muted">Leave empty for default (0.5 USDC)</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="batchUsdcSwapFeePercentage" style="font-size: 0.9em;">
+                            <strong>Fee Percentage</strong>
+                        </label>
+                        <input type="number" class="form-control" id="batchUsdcSwapFeePercentage" placeholder="50" step="1" min="0" max="100" style="font-size: 0.9em;">
+                        <small class="form-text text-muted">Leave empty for default (50%)</small>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="batchUsdcSwapFeeRecipient" style="font-size: 0.9em;">
+                            <strong>Fee Recipient Address</strong>
+                        </label>
+                        <input type="text" class="form-control" id="batchUsdcSwapFeeRecipient" placeholder="0x58c51ee8998e8ef06362df26a0d966bbd0cf5113" style="font-size: 0.85em; font-family: monospace;">
+                        <small class="form-text text-muted">Leave empty for default address</small>
+                    </div>
+
+                    <button class="btn btn-sm btn-secondary btn-block" id="batchUsdcSwapResetButton">
+                        Reset to Defaults
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="batchUsdcSwapExecuteButton">
+                Execute Batch Swap
+            </button>
+
+            <p class="info-text alert alert-secondary">
+                Status: <span id="batchUsdcSwapStatus">Not executed</span>
+            </p>
+
+            <p class="info-text alert alert-secondary" style="word-break: break-all;">
+                Batch ID: <span id="batchUsdcSwapBatchId">-</span>
+            </p>
+
+            <button class="btn btn-sm btn-info btn-block mb-3" id="batchUsdcSwapCheckStatusButton" disabled="">
+                Check Batch Status
+            </button>
+
+            <p class="info-text alert alert-danger" id="batchUsdcSwapErrorContainer" hidden="">
+                <span class="wrap" id="batchUsdcSwapError"></span>
+            </p>
+            </div>
+        </div>
+    </div></div></section><section><div class="row"><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+            PPOM - Malicious Transactions and Signatures
+          </h4>
+          <p>We know we are vulnerable if any of these Transactions/Signatures are not flagged as Malicious</p>
+          <h5>Transactions</h5>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousRawEthButton">
+            Malicious Eth Transfer
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="mintSepoliaERC20" hidden="">
+          Mint ERC20
+        </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousERC20TransferButton" title="This will only be flagged if you have some ERC20 balance">
+            Malicious ERC20 Transfer (USDC)
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousApprovalButton">
+            Malicious ERC20 Approval (BUSD)
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousSetApprovalForAll">
+            Malicious Set Approval For All
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousContractInteractionButton">
+            Malicious Contract Interaction
+          </button>
+          <h5>Signatures</h5>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousPermit">
+            Malicious Permit
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousTradeOrder">
+            Malicious Trade Order
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousSeaport">
+            Malicious Seaport
+          </button>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+            PPOM - EIP 5792 - Malicious Send Calls
+          </h4>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="ppomSendMaliciousEthButton">
+            Send Calls with Malicious ETH Transfer
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="ppomSendMaliciousERC20TransferButton">
+            Send Calls with Malicious ERC20 Transfer (USDC)
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="ppomSendMaliciousERC20ApprovalButton">
+            Send Calls with Malicious ERC20 Approval (BUSDC)
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="ppomSendMaliciousSetApprovalForAllButton">
+            Send Calls with Malicious Set Approval for All
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="ppomSendMaliciousContractInteractionButton">
+            Send Calls with Malicious Contract Interaction
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="ppomSendThreeMaliciousTxsButton">
+            Send Calls with 3 Malicious Transactions
+          </button>
+          <hr>
+          <div id="ppomRequestIdContainer" hidden="">
+            <label>Request ID:</label>
+            <input type="text" id="ppomRequestIdInput" class="form-control" readonly="">
+          </div>
+          <p class="info-text alert alert-warning" id="ppomSendCallsErrorContainer" hidden="">
+            <span class="wrap" id="ppomSendCallsError"></span>
+          </p>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="ppomGetCallsStatusButton" disabled="">
+            Get Calls Status
+          </button>
+          <p class="info-text alert alert-success">
+            <span class="wrap" id="ppomGetCallsStatusResult">Status</span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            PPOM - Malicious Batching and Queueing
+          </h4>
+          <p>We know we are vulnerable if any of these Transactions/Signatures are not flagged as Malicious</p>
+          <h5>Transactions</h5>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendEIP1559Batch" disabled="">
+            Send Eth Malicious x10 Batch
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendEIP1559Queue" disabled="">
+            Send Eth Malicious x10 Queue
+          </button>
+
+          <h5>Signatures</h5>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedDataV4Batch">
+            Sign Malicious x10 Batch
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedDataV4Queue">
+            Sign Malicious x10 Queue
+          </button>
+          <hr>
+          <h4>PPOM - Malicious Deeplinks</h4>
+          <a id="maliciousSendEthWithDeeplink" href="https://metamask.app.link/send/0x5FbDB2315678afecb367f032d93F642f64180aa3?value=0">
+            <button class="btn btn-warning btn-lg btn-block mb-3 text-dark">
+            (Mobile) Malicious Eth Transfer With Deeplink
+            </button>
+          </a>
+          <a id="maliciousTransferERC20WithDeeplink" href="https://metamask.app.link/send/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48@1/transfer?address=0x5FbDB2315678afecb367f032d93F642f64180aa3&amp;uint256=1e6">
+            <button class="btn btn-warning btn-lg btn-block mb-3 text-dark">
+            (Mobile) Malicious ERC20 Transfer With Deeplink
+            </button>
+          </a>
+          <a id="maliciousApproveERC20WithDeeplink" href="https://metamask.app.link/approve/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48@1/approve?address=0x5FbDB2315678afecb367f032d93F642f64180aa3&amp;uint256=1e6">
+            <button class="btn btn-warning btn-lg btn-block mb-3 text-dark">
+            (Mobile) Malicious ERC20 Approval With Deeplink
+            </button>
+          </a>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            PPOM - Malicious Warning Bypasses
+          </h4>
+          <p>We know we are vulnerable if any of these Transactions/Signatures are not flagged as Malicious</p>
+          <h5>Transactions</h5>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousSendWithOddHexData">
+            Malicious Eth Transfer With Odd Hex Data
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousApproveERC20WithOddHexData">
+            Malicious ERC20 Approval With Odd Hex Data
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousSendWithoutHexPrefixValue">
+            Malicious Eth Transfer Without 0x Prefix for Hex Value
+          </button>
+          <h5>Signatures</h5>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousPermitHexPaddedChain">
+            Malicious Permit with Padded chainId
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="maliciousPermitIntAddress">
+            Malicious Permit with Integer Address
+          </button>
+          <p class="info-text alert alert-warning">
+            Result:
+            <span id="maliciousWarningBypassResult"></span>
+          </p>
+        </div>
+      </div>
+    </div></div></section><section><div class="row d-flex justify-content-center">
+      <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">
+              Encrypt / Decrypt
+            </h4>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="getEncryptionKeyButton">
+              Get Encryption Key
+            </button>
+
+            <hr>
+
+            <div id="encrypt-message-form">
+              <input class="form-control" type="text" placeholder="Message to encrypt" id="encryptMessageInput" disabled="">
+
+              <button class="btn btn-primary btn-lg btn-block mb-3" id="encryptButton" disabled="">
+                Encrypt
+              </button>
+            </div>
+
+            <hr>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="decryptButton" disabled="">
+              Decrypt
+            </button>
+
+            <p class="info-text alert alert-secondary">
+              Encryption key: <span id="encryptionKeyDisplay"></span>
+            </p>
+
+            <p class="info-text text-truncate alert alert-secondary">
+              Ciphertext: <span id="ciphertextDisplay"></span>
+            </p>
+
+            <p class="info-text alert alert-secondary">
+              Cleartext: <span id="cleartextDisplay"></span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div></section><section><div class="row"><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+        <div class="card full-width">
+            <div class="card-body">
+                <h4>
+                Eth Sign
+                </h4>
+
+                <button class="btn btn-primary btn-lg btn-block mb-3" id="ethSign">
+                Sign
+                </button>
+
+                <p class="info-text alert alert-warning">
+                Result: <span id="ethSignResult"></span>
+                </p>
+            </div>
+        </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Personal Sign
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="personalSign">
+            Sign
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Result: <span id="personalSignResult"></span>
+          </p>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="personalSignVerify" disabled="">
+            Verify
+          </button>
+
+          <p class="info-text alert alert-warning">
+            eth-sig-util recovery result:
+            <span id="personalSignVerifySigUtilResult"></span>
+          </p>
+          <p class="info-text alert alert-warning">
+            personal_ecRecover result:
+            <span id="personalSignVerifyECRecoverResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Sign Typed Data
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedData">
+            Sign
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Result: <span id="signTypedDataResult"></span>
+          </p>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedDataVerify" disabled="">
+            Verify
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Recovery result:
+            <span id="signTypedDataVerifyResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Sign Typed Data V3
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedDataV3">
+            Sign
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Result:
+            <span id="signTypedDataV3Result"></span>
+          </p>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedDataV3Verify" disabled="">
+            Verify
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Recovery result:
+            <span id="signTypedDataV3VerifyResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Sign Typed Data V4
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedDataV4">
+            Sign
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Result:
+            <span id="signTypedDataV4Result"></span>
+          </p>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signTypedDataV4Verify" disabled="">
+            Verify
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Recovery result:
+            <span id="signTypedDataV4VerifyResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Sign Permit
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signPermit">
+            Sign
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Result:
+            <span id="signPermitResult"></span>
+            </p><p class="info-text alert alert-warning" id="signPermitResultR">r: </p>
+            <p class="info-text alert alert-warning" id="signPermitResultS">s: </p>
+            <p class="info-text alert alert-warning" id="signPermitResultV">v: </p>
+          <p></p>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="signPermitVerify" disabled="">
+            Verify
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Recovery result:
+            <span id="signPermitVerifyResult"></span>
+          </p>
+        </div>
+      </div>
+    </div>          <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+            <div class="card full-width">
+              <div class="card-body">
+                <h4>
+                  Sign Typed Data Variants
+                </h4>
+                <button class="btn btn-primary btn-lg btn-block mb-3" id="signBlurOrder">
+                  Blur - Order
+                </button>
+                <button class="btn btn-primary btn-lg btn-block mb-3" id="signPermitSingle">
+                  PermitSingle
+                </button>
+
+                <button class="btn btn-primary btn-lg btn-block mb-3" id="signPermitBatch">
+                  PermitBatch
+                </button>
+
+                <button class="btn btn-primary btn-lg btn-block mb-3" id="signSeaportBulkOrder">
+                  Seaport - BulkOrder
+                </button>
+
+                <p class="info-text alert alert-warning">
+                  Result:
+                  <span id="signPermitVariantResult"></span>
+                  </p><p class="info-text alert alert-warning" id="signPermitVariantResultR">r: </p>
+                  <p class="info-text alert alert-warning" id="signPermitVariantResultS">s: </p>
+                  <p class="info-text alert alert-warning" id="signPermitVariantResultV">v: </p>
+                <p></p>
+              </div>
+            </div>
+          </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Sign In With Ethereum
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="siwe">
+          Sign In With Ethereum
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="siweResources">
+          Sign In With Ethereum (w/ Resources)
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="siweBadDomain">
+          Sign In With Ethereum (Bad Domain)
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="siweBadAccount">
+          Sign In With Ethereum (Bad Account)
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="siweMalformed">
+          Sign In With Ethereum (Malformed)
+          </button>
+
+          <p class="info-text alert alert-warning">
+            Result:
+            <span id="siweResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+        <div class="card full-width">
+          <div class="card-body">
+            <h4>
+              Malformed Signatures
+            </h4>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="signInvalidType">
+            Invalid Type
+            </button>
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="signEmptyDomain">
+            Empty Domain
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="signExtraDataNotTyped">
+            Extra Data not Typed
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="signInvalidPrimaryType">
+            Invalid Primary Type
+            </button>
+
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="signNoPrimaryTypeDefined">
+            No Primary Type Defined
+            </button>
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="signInvalidVerifyingContractType">
+            Invalid Verifying Contract Type
+            </button>
+            <p class="info-text alert alert-warning">
+              Result:
+              <span id="signMalformedResult"></span>
+            </p>
+          </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Malformed Transactions
+          </h4>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendWithInvalidValue">
+          Invalid Value Type (string)
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendWithInvalidTxType">
+          Invalid Transaction Type (not supported)
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendWithInvalidRecipient">
+          Invalid Recipient (string)
+          </button>
+
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendWithInvalidGasLimit" disabled="">
+          Invalid Gas Limit (string)
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendWithInvalidMaxFeePerGas" disabled="">
+          Invalid Max Fee Per Gas (string)
+          </button>
+          <p class="info-text alert alert-warning">
+            Result:
+            <span id="sendMalformedResult"></span>
+          </p>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4>
+            Tempo Transactions
+          </h4>
+
+          <div class="mb-3">
+            <label for="tempoErc20TokenAddressInput" class="form-label">ERC20 Token Address</label>
+            <input type="text" class="form-control" id="tempoErc20TokenAddressInput" value="0x8757b7EABAAaC8173DF72B868B4947FaE1368784" placeholder="0x8757b7EABAAaC8173DF72B868B4947FaE1368784">
+          </div>
+
+          <div class="mb-3">
+            <label for="tempoFeeTokenInput" class="form-label">Fee Token Address</label>
+            <input type="text" class="form-control" id="tempoFeeTokenInput" value="0x20c0000000000000000000000000000000000000" placeholder="0x20c0000000000000000000000000000000000000">
+          </div>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="sendTempoBatchTx">
+          Send Tempo (0x76) Batch Transaction
+          </button>
+          <p>Sends a minimalistic 0x76 batch with 2 ERC20 transfers for initial testing:</p>
+          <ul>
+            <li>0.01 [erc20Token] to 0x2367e6eca6e1fcc2d112133c896e3bddad375aff</li>
+            <li>0.01 [erc20Token] to 0x1e3abc74428056924cEeE2F45f060879c3F063ed</li>
+          </ul>
+          <p class="info-text alert alert-warning">
+            Result:
+            <span id="sendTempoBatchTxResult"></span>
+          </p>
+        </div>
+      </div>
+    </div></div></section><section><div class="row d-flex justify-content-center"><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+            JSON RPC Result
+          </h4>
+          <textarea name="json-rpc-response" id="json-rpc-response" rows="5"></textarea>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+            Ethereum Chain Interactions
+          </h4>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="addEthereumChain">
+            Add Localhost 8546
+          </button>
+          <button class="btn btn-primary btn-lg btn-block mb-3" id="switchEthereumChain">
+            Switch to Localhost 8546
+          </button>
+        </div>
+      </div>
+    </div><div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12 d-flex align-items-stretch">
+      <div class="card full-width">
+        <div class="card-body">
+          <h4 class="card-title">
+          </h4>
+        </div>
+      </div>
+    </div></div></section><section><div class="row d-flex justify-content-center">
+      <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+        <div class="card">
+          <div class="card-body">
+            <h4 class="card-title">
+              Send form
+            </h4>
+            <div class="form-group">
+              <label>From</label>
+              <input class="form-control" type="text" id="fromInput">
+            </div>
+            <div class="form-group">
+              <label>To</label>
+              <input class="form-control" type="text" id="toInput">
+            </div>
+            <div class="form-group">
+              <label>Amount</label>
+              <input class="form-control" type="text" id="amountInput">
+            </div>
+            <div class="form-group">
+              <label>Type</label>
+              <select class="browser-default custom-select" id="typeInput">
+                <option value="0x0">0x0</option>
+                <option value="0x2">0x2</option>
+              </select>
+            </div>
+            <div class="form-group" id="gasPriceDiv" style="display: block;">
+              <label>Gas Price</label>
+              <input class="form-control" type="text" id="gasInput">
+            </div>
+            <div class="form-group" id="maxFeeDiv" style="display: none;">
+              <label>Max Fee</label>
+              <input class="form-control" type="text" id="maxFeeInput">
+            </div>
+            <div class="form-group" id="maxPriorityDiv" style="display: none;">
+              <label>Max Priority Fee</label>
+              <input class="form-control" type="text" id="maxPriorityFeeInput">
+            </div>
+            <div class="form-group">
+              <label>Data</label>
+              <input class="form-control" type="text" id="dataInput">
+            </div>
+            <button class="btn btn-primary btn-lg btn-block mb-3" id="submitForm">
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+    </div></section><section><div class="row d-flex justify-content-center">
+  <div class="col-xl-4 col-lg-6 col-md-12 col-sm-12 col-12">
+    <div class="card">
+      <div class="card-body">
+        <h4 class="card-title">
+          ENS Resolution
+        </h4>
+        <div class="form-group">
+          <label>Address</label>
+          <input class="form-control" type="text" id="ensInput">
+        </div>
+        <button class="btn btn-primary btn-lg btn-block mb-3" id="ensSubmit">
+          Submit
+        </button>
+        <p class="info-text alert alert-warning">
+          Result:
+          <span id="ensResult"></span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div></section></main>
+
+    <script src="main.js" defer=""></script>
+  
+<div class="network-modal">
+    <div class="network-modal-content">
+      <div class="network-modal-header">
+        <h5>Select Network</h5>
+        <button class="network-modal-close">×</button>
+      </div>
+      <div class="network-modal-body">
+        <div class="network-category">
+          <h6>Main Networks</h6>
+          <div class="network-list" id="mainNetworks"><div class="network-modal-item active" data-chain-id="0x1">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #627eea"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Ethereum Mainnet</div>
+        <div class="network-modal-item-chain-id">0x1</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0xe708">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #000000"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Linea</div>
+        <div class="network-modal-item-chain-id">0xe708</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x2105">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #0052ff"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Base Mainnet</div>
+        <div class="network-modal-item-chain-id">0x2105</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0xa4b1">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #28a0f0"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Arbitrum One</div>
+        <div class="network-modal-item-chain-id">0xa4b1</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0xa86a">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #e84142"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Avalanche Network C-Chain</div>
+        <div class="network-modal-item-chain-id">0xa86a</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x38">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #f3ba2f"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Binance Smart Chain</div>
+        <div class="network-modal-item-chain-id">0x38</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0xa">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #ff0420"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">OP Mainnet</div>
+        <div class="network-modal-item-chain-id">0xa</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x89">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #8247e5"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Polygon Mainnet</div>
+        <div class="network-modal-item-chain-id">0x89</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x1a">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #ff6b35"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Sei Network</div>
+        <div class="network-modal-item-chain-id">0x1a</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x144">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #8e71c7"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">zkSync Era Mainnet</div>
+        <div class="network-modal-item-chain-id">0x144</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x3e7">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #50e3a4"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">HyperEVM</div>
+        <div class="network-modal-item-chain-id">0x3e7</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x10e6">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #f43f5e"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">MegaETH</div>
+        <div class="network-modal-item-chain-id">0x10e6</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x8f">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #836ef9"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Monad</div>
+        <div class="network-modal-item-chain-id">0x8f</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x1079">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #dcdcdc"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Tempo Mainnet (Presto)</div>
+        <div class="network-modal-item-chain-id">0x1079</div>
+      </div>
+    </div>
+  </div></div>
+        </div>
+        <div class="network-category">
+          <h6>Test Networks</h6>
+          <div class="network-list" id="testNetworks"><div class="network-modal-item" data-chain-id="0xaa36a7">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #f6c343"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Sepolia</div>
+        <div class="network-modal-item-chain-id">0xaa36a7</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0xe705">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #000000"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Linea Sepolia</div>
+        <div class="network-modal-item-chain-id">0xe705</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x1a4">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #ff6b35"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Mega Testnet</div>
+        <div class="network-modal-item-chain-id">0x1a4</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0x1a5">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #ff6b35"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Monad Testnet</div>
+        <div class="network-modal-item-chain-id">0x1a5</div>
+      </div>
+    </div>
+  </div><div class="network-modal-item" data-chain-id="0xa5bf">
+    <div class="network-modal-item-content">
+      <div class="network-modal-item-icon" style="background-color: #dcdcdc"></div>
+      <div class="network-modal-item-info">
+        <div class="network-modal-item-name">Tempo Testnet (Moderato)</div>
+        <div class="network-modal-item-chain-id">0xa5bf</div>
+      </div>
+    </div>
+  </div></div>
+        </div>
+      </div>
+    </div>
+  </div><w3m-modal></w3m-modal><iframe id="verify-api" src="https://verify.walletconnect.com/e6360eaee594162688065f1c70c863b7" style="display: none;"></iframe></body></html>
