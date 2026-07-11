@@ -6,22 +6,23 @@
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  --color-bg: #0a0a0b;
-  --color-surface: #131316;
-  --color-surface-2: #1a1a1e;
-  --color-border: #26262b;
-  --color-ink: #f4f4f5;
-  --color-muted: #9a9aa2;
+  --color-bg: #FAF9F6;
+  --color-surface: #F2EFE9;
+  --color-surface-2: #E5E1D6;
+  --color-border: #D3CDC1;
+  --color-ink: #141414;
+  --color-muted: #6C685F;
+  --color-brand: #FF5A1F;
 
-  --color-verdict-safe: #22c55e;
-  --color-verdict-caution: #eab308;
-  --color-verdict-high_risk: #f97316;
-  --color-verdict-critical: #ef4444;
+  --color-verdict-safe: #10B981;
+  --color-verdict-caution: #F59E0B;
+  --color-verdict-high_risk: #E11D48;
+  --color-verdict-critical: #EF4444;
 }
 
 html {
   background-color: var(--color-bg);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
@@ -38,6 +39,26 @@ body {
 }
 
 ::selection {
-  background-color: var(--color-ink);
+  background-color: var(--color-brand);
   color: var(--color-bg);
+}
+
+/* Obscura Style Frame Lines */
+.page-edge-frame {
+  position: fixed;
+  inset: 12px;
+  pointer-events: none;
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  z-index: 100;
+}
+
+.floating-square-chip {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  transform: rotate(45deg);
+  z-index: 101;
 }

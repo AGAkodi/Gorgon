@@ -1,0 +1,26 @@
+{
+  "name": "vetra",
+  "version": "1.0.0",
+  "description": "Multi-chain security verdict agent for the AI agent economy. Vetra combines\r multi-model AI consensus, static analysis, exploit intelligence matching, and\r on-chain attestation with a transaction-simulation sandbox, so agents can\r verify before they execute. Built as an OKX.AI Agent-to-MCP service.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AGAkodi/Vetra.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AGAkodi/Vetra/issues"
+  },
+  "homepage": "https://github.com/AGAkodi/Vetra#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ethers": "^6.17.0",
+    "solc": "^0.8.36"
+  }
+}

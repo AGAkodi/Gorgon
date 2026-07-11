@@ -2,8 +2,9 @@ import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import Hero from '../sections/Hero'
 import HowItWorks from '../sections/HowItWorks'
-import ForDevelopers from '../sections/ForDevelopers'
+import FeatureBreakdown from '../sections/FeatureBreakdown'
 import ChainSupport from '../sections/ChainSupport'
+import PricingPreview from '../sections/PricingPreview'
 
 export default function Home() {
   return (
@@ -12,8 +13,9 @@ export default function Home() {
       <main>
         <Hero />
         <HowItWorks />
-        <ForDevelopers />
+        <FeatureBreakdown />
         <ChainSupport />
+        <PricingPreview />
       </main>
       <Footer />
     </div>

@@ -1,148 +1,218 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ChevronDown, Menu, X, ShieldHalf } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Menu, X, ShieldHalf, LogOut, ChevronDown } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import PillButton from './PillButton'
 
-const DROPDOWNS = {
-  PRODUCT: [
-    { label: 'Verdict Engine', to: '/dashboard' },
-    { label: 'Simulation Sandbox', to: '/sandbox' },
-  ],
-  DEVELOPERS: [
-    { label: 'MCP Tools', to: '/#developers' },
-    { label: 'API Reference', to: '/#developers' },
-  ],
-  COMPANY: [
-    { label: 'About', to: '/' },
-    { label: 'Contact', to: '/' },
-  ],
-}
-
-const SIMPLE_LINKS = [
-  { label: 'Pricing', to: '/#pricing' },
-  { label: 'Docs', to: '/#developers' },
-]
-
-function NavDropdown({ label }) {
-  const [open, setOpen] = useState(false)
-  const items = DROPDOWNS[label]
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-    >
-      <button
-        type="button"
-        className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-muted transition-colors hover:text-ink"
-        onClick={() => setOpen((o) => !o)}
-      >
-        {label}
-        <ChevronDown size={14} strokeWidth={2} />
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full pt-3">
-          <div className="w-48 rounded-xl border border-border bg-surface p-1.5 shadow-2xl shadow-black/50">
-            {items.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className="block rounded-lg px-3 py-2 text-sm text-ink/90 hover:bg-surface-2"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function MobileMenu({ open, onClose }) {
-  if (!open) return null
-
-  return (
-    <div className="border-t border-border px-6 py-4 lg:hidden">
-      <nav className="flex flex-col gap-1">
-        {Object.entries(DROPDOWNS).map(([label, items]) => (
-          <div key={label} className="py-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted">{label}</p>
-            <div className="mt-2 flex flex-col gap-1">
-              {items.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.to}
-                  onClick={onClose}
-                  className="rounded-lg px-2 py-2 text-sm text-ink/90 hover:bg-surface-2"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
-        <div className="mt-1 flex flex-col gap-1 border-t border-border pt-3">
-          {SIMPLE_LINKS.map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              onClick={onClose}
-              className="rounded-lg px-2 py-2 text-sm text-ink/90 hover:bg-surface-2"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      </nav>
-    </div>
-  )
-}
-
 export default function Nav() {
+  const { isConnected, walletAddress, triggerLogin, disconnect } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const navigate = useNavigate()
+
+  const truncatedAddress = walletAddress
+    ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`
+    : ''
+
+  const handleLinkClick = (selector) => {
+    setMobileOpen(false)
+    if (window.location.pathname !== '/') {
+      navigate('/')
+      setTimeout(() => {
+        const el = document.querySelector(selector)
+        if (el) el.scrollIntoView({ behavior: 'smooth' })
+      }, 300)
+    } else {
+      const el = document.querySelector(selector)
+      if (el) el.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-bg/85 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-border bg-bg/85 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
-        <Link to="/" className="flex items-center gap-2">
-          <ShieldHalf size={22} strokeWidth={2.25} />
-          <span className="font-display text-lg font-bold tracking-tight">Vetra</span>
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-bg group-hover:scale-105 transition-transform">
+            <ShieldHalf size={18} strokeWidth={2.5} />
+          </div>
+          <span className="font-display text-xl font-black tracking-tight text-ink">Vetra</span>
         </Link>
 
+        {/* Center Links */}
         <nav className="hidden items-center gap-8 lg:flex">
-          <NavDropdown label="PRODUCT" />
-          <NavDropdown label="DEVELOPERS" />
-          {SIMPLE_LINKS.map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              className="text-xs font-medium uppercase tracking-wider text-muted transition-colors hover:text-ink"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <NavDropdown label="COMPANY" />
+          {!isConnected ? (
+            <>
+              <button
+                onClick={() => handleLinkClick('#how-it-works')}
+                className="text-xs font-semibold uppercase tracking-wider text-muted hover:text-ink transition-colors cursor-pointer"
+              >
+                How It Works
+              </button>
+              <button
+                onClick={() => handleLinkClick('#features')}
+                className="text-xs font-semibold uppercase tracking-wider text-muted hover:text-ink transition-colors cursor-pointer"
+              >
+                Features
+              </button>
+              <button
+                onClick={() => handleLinkClick('#pricing')}
+                className="text-xs font-semibold uppercase tracking-wider text-muted hover:text-ink transition-colors cursor-pointer"
+              >
+                Pricing
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/dashboard"
+                className="text-xs font-semibold uppercase tracking-wider text-muted hover:text-ink transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                to="/sandbox"
+                className="text-xs font-semibold uppercase tracking-wider text-muted hover:text-ink transition-colors"
+              >
+                Sandbox
+              </Link>
+              <Link
+                to="/api-keys"
+                className="text-xs font-semibold uppercase tracking-wider text-muted hover:text-ink transition-colors"
+              >
+                API Keys
+              </Link>
+              <Link
+                to="/pricing"
+                className="text-xs font-semibold uppercase tracking-wider text-muted hover:text-ink transition-colors"
+              >
+                Pricing
+              </Link>
+            </>
+          )}
         </nav>
 
-        <div className="flex items-center gap-3">
-          <PillButton variant="secondary" className="hidden sm:inline-flex">
-            Log In
-          </PillButton>
-          <PillButton variant="primary">Get API Key</PillButton>
-          <button
-            type="button"
-            onClick={() => setMobileOpen((o) => !o)}
-            className="inline-flex items-center justify-center rounded-full border border-border p-2.5 text-ink lg:hidden"
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-          </button>
+        {/* Right CTA */}
+        <div className="hidden lg:flex items-center gap-3">
+          {!isConnected ? (
+            <PillButton as="button" onClick={triggerLogin} variant="primary" className="bg-brand text-bg font-bold">
+              Get Started
+            </PillButton>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((o) => !o)}
+                className="flex items-center gap-2 rounded-full border-2 border-border bg-surface px-5 py-2 font-mono text-xs font-bold text-ink hover:border-brand transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-brand" />
+                {truncatedAddress}
+                <ChevronDown size={14} className="text-muted" />
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-20 w-48 rounded-2xl border border-border bg-surface p-1.5 shadow-xl">
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false)
+                        disconnect()
+                      }}
+                      className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-semibold text-verdict-critical hover:bg-surface-2 transition-colors"
+                    >
+                      <LogOut size={16} />
+                      Disconnect
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Mobile menu trigger */}
+        <button
+          type="button"
+          onClick={() => setMobileOpen((o) => !o)}
+          className="inline-flex items-center justify-center rounded-full border border-border p-2.5 text-ink lg:hidden hover:border-brand transition-colors"
+          aria-label="Toggle menu"
+        >
+          {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
       </div>
 
-      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} />
+      {/* Mobile Menu */}
+      {mobileOpen && (
+        <div className="border-t border-border px-6 py-4 bg-bg lg:hidden">
+          <nav className="flex flex-col gap-3">
+            {!isConnected ? (
+              <>
+                <button
+                  onClick={() => handleLinkClick('#how-it-works')}
+                  className="text-left py-2 text-sm font-semibold text-muted hover:text-ink transition-colors"
+                >
+                  How It Works
+                </button>
+                <button
+                  onClick={() => handleLinkClick('#features')}
+                  className="text-left py-2 text-sm font-semibold text-muted hover:text-ink transition-colors"
+                >
+                  Features
+                </button>
+                <button
+                  onClick={() => handleLinkClick('#pricing')}
+                  className="text-left py-2 text-sm font-semibold text-muted hover:text-ink transition-colors"
+                >
+                  Pricing
+                </button>
+                <PillButton as="button" onClick={() => { setMobileOpen(false); triggerLogin(); }} variant="primary" className="w-full text-center py-3">
+                  Get Started
+                </PillButton>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="py-2 text-sm font-semibold text-muted hover:text-ink transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/sandbox"
+                  onClick={() => setMobileOpen(false)}
+                  className="py-2 text-sm font-semibold text-muted hover:text-ink transition-colors"
+                >
+                  Sandbox
+                </Link>
+                <Link
+                  to="/api-keys"
+                  onClick={() => setMobileOpen(false)}
+                  className="py-2 text-sm font-semibold text-muted hover:text-ink transition-colors"
+                >
+                  API Keys
+                </Link>
+                <Link
+                  to="/pricing"
+                  onClick={() => setMobileOpen(false)}
+                  className="py-2 text-sm font-semibold text-muted hover:text-ink transition-colors"
+                >
+                  Pricing
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false)
+                    disconnect()
+                  }}
+                  className="w-full flex items-center gap-2 rounded-xl py-3 text-sm font-semibold text-verdict-critical hover:bg-surface-2 transition-colors"
+                >
+                  <LogOut size={16} />
+                  Disconnect ({truncatedAddress})
+                </button>
+              </>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   )
 }
