@@ -8,8 +8,8 @@ set -a
 [ -f .env ] && source .env
 set +a
 
-RPC_URL="${EVM_MAINNET_FORK_RPC_URL:-https://ethereum-rpc.publicnode.com}"
+RPC_URL="${X_LAYER_TESTNET_RPC_URL:-https://testrpc.xlayer.tech/terigon}"
 PORT="${EVM_FORK_PORT:-8555}"
 
-echo "Forking $RPC_URL on port $PORT..."
+echo "Forking $RPC_URL (X Layer) on port $PORT..."
 exec anvil --fork-url "$RPC_URL" --port "$PORT"

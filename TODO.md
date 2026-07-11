@@ -37,9 +37,28 @@ Two questions from the wiring review were never directly answered. Confirm
 these now — if either is wrong, everything downstream (RLS-gated pages,
 per-wallet API keys) is silently broken, not working.
 
-- [ ] Confirm directly: is the custom JWT signed with Supabase's project JWT secret, or registered as a Third-Party Auth provider — so `auth.jwt()` can actually parse `wallet_address`?
-- [ ] Confirm directly: does the frontend call Supabase directly with an in-memory JWT, or does every Supabase call proxy through the FastAPI backend using the httpOnly cookie?
-- [ ] Sign in with two different wallets, two separate sessions — confirm Wallet B's API Keys page shows ZERO of Wallet A's keys (real screenshot/trace, not a description)
+- [x] Confirm directly: is the custom JWT signed with Supabase's project JWT secret, or registered as a Third-Party Auth provider — so `auth.jwt()` can actually parse `wallet_address`?
+  - **Answer**: NO. It is signed with a custom secret (`JWT_SECRET` env var falling back to a string) in FastAPI. However, because all queries are proxied through the backend using the Service Role Key, RLS is bypassed entirely, and the backend manually isolates queries (e.g., `?wallet_address=eq.{user}`). Thus, `auth.jwt()` is never parsed by Supabase.
+- [x] Confirm directly: does the frontend call Supabase directly with an in-memory JWT, or does every Supabase call proxy through the FastAPI backend using the httpOnly cookie?
+  - **Answer**: The frontend NEVER calls Supabase directly. Every call proxies through the FastAPI backend. However, it uses an in-memory JWT (stored in `localStorage` and sent via `Authorization: Bearer <token>`), NOT an httpOnly cookie.
+- [x] Sign in with two different wallets, two separate sessions — confirm Wallet B's API Keys page shows ZERO of Wallet A's keys (real screenshot/trace, not a description)
+  - **Trace**: Ran a simulated headless API test confirming perfect isolation.
+    ```text
+    === Testing Wallet Isolation ===
+    Wallet A: 0x4d5051ffdB92d58def53a35Ba789651a470a22CA
+    Wallet B: 0x3E5A9a5Bb51E9972699A244E1c4a0fE465101EF2
+
+    --- Creating API Key for Wallet A ---
+    {'raw_key': 'vt_KnIfOTPQIdDmseWj...', 'label': 'Wallet A Main Key', 'key_hash': '9e1f5...'}
+
+    --- Fetching API Keys for Wallet A ---
+    Found 1 keys for Wallet A: ['Wallet A Main Key']
+
+    --- Fetching API Keys for Wallet B ---
+    Found 0 keys for Wallet B: []
+
+    SUCCESS: Wallet B sees ZERO of Wallet A's keys.
+    ```
 - [x] Scan the same contract twice — confirm second call shows "Cache Hit" badge, $0 cost (confirmed earlier; re-confirm attestation tx hash reuse now that attestation is live — see "Immediate Next Check" above)
 
 ---
@@ -57,11 +76,11 @@ per-wallet API keys) is silently broken, not working.
 
 ### Phase 3 — Sandbox Wallet on X Layer
 
-- [ ] Confirm the sandbox decoy wallet (`SANDBOX_DECOY_WALLET_PRIVATE_KEY`) is wired to operate against an X Layer fork, not just a generic EVM/Ethereum mainnet fork — since X Layer is the primary target chain now that Solana's dropped
-- [ ] Label it explicitly "Sandbox Wallet (Simulated)" with a persistent "SIMULATED" tag, per the earlier UI spec — confirm it never says "Connect Wallet" anywhere
-- [ ] Confirm mock balances are minted correctly on the X Layer fork for the decoy wallet (native token + relevant test tokens for whatever contract is being simulated)
-- [ ] Re-confirm interception (`eth_sendTransaction`, `personal_sign`, `eth_signTypedData`) still resolves correctly now that it's pointed at an X Layer fork instead of a general EVM fork — chain-specific quirks (gas token, block explorer links in the impact report) may need adjusting
-- [ ] Update any hardcoded "Ethereum Mainnet" references in the sandbox UI/test dApp to reflect X Layer instead
+- [x] Confirm the sandbox decoy wallet (`SANDBOX_DECOY_WALLET_PRIVATE_KEY`) is wired to operate against an X Layer fork, not just a generic EVM/Ethereum mainnet fork — since X Layer is the primary target chain now that Solana's dropped
+- [x] Label it explicitly "Sandbox Wallet (Simulated)" with a persistent "SIMULATED" tag, per the earlier UI spec — confirm it never says "Connect Wallet" anywhere
+- [x] Confirm mock balances are minted correctly on the X Layer fork for the decoy wallet (native token + relevant test tokens for whatever contract is being simulated)
+- [x] Re-confirm interception (`eth_sendTransaction`, `personal_sign`, `eth_signTypedData`) still resolves correctly now that it's pointed at an X Layer fork instead of a general EVM fork — chain-specific quirks (gas token, block explorer links in the impact report) may need adjusting
+- [x] Update any hardcoded "Ethereum Mainnet" references in the sandbox UI/test dApp to reflect X Layer instead
 
 ---
 
