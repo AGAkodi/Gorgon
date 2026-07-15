@@ -28,13 +28,24 @@ frontend/         Vetra web UI (marketing site, Verdict Dashboard, Sandbox)
 
 Build sequencing and phase-by-phase tasks live in `TODO.md`.
 
-## Running the frontend
+## Running locally
+
+The frontend calls a separate backend (`mcp-server/auth_server.py`) directly
+at `http://localhost:4023` — both need to be running, or wallet connect
+fails with a "Failed to fetch" / "could not reach the auth server" error.
 
 ```sh
+# Terminal 1 — backend (wallet auth, API keys, verdict/simulate proxying)
+python3 mcp-server/auth_server.py
+
+# Terminal 2 — frontend
 cd frontend
 pnpm install
 pnpm dev
 ```
+
+For `simulate_wallet_interaction` calls specifically, the sandbox fork also
+needs to be running (`sandbox/fork/start-evm-fork.sh`).
 
 ## Secrets
 

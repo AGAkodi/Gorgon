@@ -4,6 +4,7 @@ import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import PillButton from '../components/PillButton'
 import { Coins, CircleHelp, ShieldCheck } from 'lucide-react'
+import { API_BASE_URL } from '../lib/api'
 
 export default function PricingPage() {
   const { isConnected, triggerLogin } = useAuth()
@@ -11,7 +12,7 @@ export default function PricingPage() {
 
   const fetchPricing = async () => {
     try {
-      const resp = await fetch('http://localhost:4023/api/pricing')
+      const resp = await fetch(`${API_BASE_URL}/api/pricing`)
       if (resp.ok) {
         const data = await resp.json()
         setRates(data)

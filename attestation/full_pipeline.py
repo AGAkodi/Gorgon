@@ -49,6 +49,28 @@ def run_verdict_pipeline(chain: str, address: str, source_code: str, use_cache: 
 
     static_findings = static_result["static_findings"]
 
+    if static_result["insufficient_data"]:
+        # No source to analyze (empty/bytecode-only) — static_findings is []
+        # here, which would otherwise sail through consensus as "no findings
+        # => safe". That's the wrong default: "we don't know" must never
+        # read the same as "we checked and it's fine". Fail toward caution
+        # instead, without fabricating model opinions or exploit matches
+        # that didn't actually run.
+        verdict = {
+            "chain": chain,
+            "address": address,
+            "verdict": "caution",
+            "confidence": 0.0,
+            "model_consensus": [],
+            "static_findings": [],
+            "exploit_matches": [],
+            "attestation": attest(chain, address, "caution", int(time.time())),
+            "cache_hit": False,
+        }
+        if use_cache:
+            set_cached(key, verdict)
+        return verdict
+
     ctx = AnalysisContext(chain=chain, address=address, source_code=source_code, static_findings=static_findings)
     consensus_result = run_consensus(ctx)
 

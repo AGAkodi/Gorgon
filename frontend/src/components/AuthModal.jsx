@@ -9,18 +9,12 @@ export default function AuthModal() {
     isSigning,
     selectedWallet,
     connectWallet,
+    useOtherWallet,
     signMessage,
+    pendingSiweMessage,
   } = useAuth()
 
   if (!showAuthModal) return null
-
-  const siweMessage = `Sign-in Request for Vetra Sandbox
-Domain: vetra.sandbox
-Address: 0x4a2f8d3c267c5d32be8058bb8eb970870f07c91e
-Statement: I prove ownership of this wallet and sign in to Vetra.
-Nonce: 9812401
-Issued At: ${new Date().toISOString()}
-Chain ID: 1952 (X Layer)`
 
   return (
     <AnimatePresence>
@@ -86,15 +80,15 @@ Chain ID: 1952 (X Layer)`
               </button>
 
               <button
-                onClick={() => connectWallet('WalletConnect')}
+                onClick={useOtherWallet}
                 className="w-full flex items-center justify-between rounded-2xl border border-border bg-surface px-5 py-4 font-display text-sm font-bold hover:border-brand hover:bg-surface-2 transition-all group"
               >
                 <span className="flex items-center gap-3">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#3b99fc]" />
-                  WalletConnect
+                  <span className="w-2.5 h-2.5 rounded-full bg-muted" />
+                  Other Wallet
                 </span>
                 <span className="text-xs font-mono font-normal text-muted group-hover:text-brand transition-colors">
-                  Any Wallet
+                  Any injected EVM wallet
                 </span>
               </button>
             </div>
@@ -104,16 +98,24 @@ Chain ID: 1952 (X Layer)`
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-2">
                   SIWE Signature Message
                 </p>
-                <pre className="whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-ink/80 bg-bg p-3 rounded-lg border border-border max-h-48 overflow-y-auto">
-                  {siweMessage}
-                </pre>
+                {pendingSiweMessage ? (
+                  <pre className="whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-ink/80 bg-bg p-3 rounded-lg border border-border max-h-48 overflow-y-auto">
+                    {pendingSiweMessage}
+                  </pre>
+                ) : (
+                  <p className="text-[10px] text-muted italic">
+                    Waiting for wallet connection and network confirmation...
+                  </p>
+                )}
               </div>
 
               {isSigning ? (
                 <div className="flex flex-col items-center justify-center py-4">
                   <Loader2 className="animate-spin text-brand mb-2" size={28} />
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-                    Requesting signature from {selectedWallet}...
+                    {pendingSiweMessage
+                      ? `Requesting signature from ${selectedWallet}...`
+                      : `Connecting to ${selectedWallet}...`}
                   </p>
                   <p className="text-[10px] text-muted mt-1">
                     Please approve the request in your wallet window.
@@ -121,7 +123,7 @@ Chain ID: 1952 (X Layer)`
                 </div>
               ) : (
                 <button
-                  onClick={signMessage}
+                  onClick={() => signMessage()}
                   className="w-full rounded-full bg-brand py-3.5 font-display text-sm font-bold text-bg hover:opacity-90 transition-all shadow-md shadow-brand/20"
                 >
                   Sign SIWE Message

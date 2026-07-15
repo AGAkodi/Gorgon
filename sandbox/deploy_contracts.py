@@ -15,6 +15,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "attestation"))
 import env  # noqa: E402,F401 (loads .env)
 import os  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).parent.parent / "exploit-intel"))
+from drainer_registry import resync_sandbox_test_drainer  # noqa: E402
+
 REPO_ROOT = Path(__file__).parent.parent
 CONTRACTS_DIR = Path(__file__).parent / "contracts"
 BUILD_DIR = Path("/tmp/sandbox-build")
@@ -71,6 +74,11 @@ def deploy_sandbox(decoy_wallet: str, mock_token_amount: int = 10_000 * 10**18) 
 
     drainer_bin = contracts["sandbox/contracts/DrainerClaim.sol:DrainerClaim"]["bin"]
     drainer_address = _deploy(drainer_bin, [ATTACKER_WALLET], "address")
+
+    # Keep the "known drainer" demo scenario working: this address is fresh
+    # every deploy, so a stale registry entry from a previous deploy would
+    # otherwise silently report known_drainer: false instead of erroring.
+    resync_sandbox_test_drainer(drainer_address, label="Sandbox test fixture (DrainerClaim.sol)")
 
     # Give the decoy wallet gas and a mock token balance.
     _run(["cast", "rpc", "--rpc-url", FORK_RPC, "anvil_setBalance", decoy_wallet, hex(10 * 10**18)])

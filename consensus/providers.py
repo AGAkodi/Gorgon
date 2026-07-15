@@ -1,17 +1,27 @@
 """Model providers for the consensus engine.
 
 Each provider takes an AnalysisContext and returns
-{"risk_category": ..., "rationale": ...}. Real providers (Anthropic, OpenAI)
-call out to the actual APIs; MockProvider is a deterministic stand-in used
-when no API key is configured, so the engine can be built and tested before
-keys exist. get_default_providers() below is the only place that decides
-which is which — fill in .env and real calls activate automatically, no
-other code changes needed.
+{"risk_category": ..., "rationale": ...}. Real providers (Groq, Gemini,
+Anthropic, OpenAI) call out to the actual APIs; MockProvider is a
+deterministic stand-in used when no API key is configured, so the engine
+can be built and tested before keys exist. get_default_providers() below
+is the only place that decides which is which — fill in .env and real
+calls activate automatically, no other code changes needed.
 """
 import json
 import os
 import re
+import sys
 from dataclasses import dataclass, field
+from pathlib import Path
+
+# Load .env ourselves rather than relying on whatever imports this module
+# to have loaded it first — get_default_providers() silently fell back to
+# mock even with a real GROQ_API_KEY in .env when this module was imported
+# standalone (e.g. running a consensus script directly rather than through
+# the full pipeline, which happens to load attestation/env.py first).
+sys.path.insert(0, str(Path(__file__).parent.parent / "attestation"))
+import env  # noqa: E402,F401 (loads .env into os.environ on import)
 
 from prompt_template import SYSTEM_PROMPT, RISK_CATEGORIES, build_prompt
 
@@ -97,6 +107,68 @@ class OpenAIProvider(ModelProvider):
         return _parse_json_response(text)
 
 
+class GroqProvider(ModelProvider):
+    name = "Groq"
+
+    def __init__(self, model: str = None):
+        api_key = os.environ.get("GROQ_API_KEY")
+        if not api_key:
+            raise ProviderError("GROQ_API_KEY not set")
+        import groq
+
+        self._client = groq.Groq(api_key=api_key)
+        # Groq's model catalog turns over fast and sources disagreed on
+        # what's current as of this writing (some call llama-3.3-70b-
+        # versatile current, Groq's own docs elsewhere say it's deprecated
+        # in favor of openai/gpt-oss-120b) — couldn't verify against a live
+        # key. Configurable via GROQ_MODEL so whoever adds a real key can
+        # check console.groq.com/docs/models and override without a code
+        # change, rather than trust a hardcoded name that may be stale.
+        # (An empty-but-present GROQ_MODEL= in .env must fall through to
+        # the default too, not just an absent one — os.environ.get()'s
+        # default only kicks in when the key is missing entirely.)
+        self._model = model or os.environ.get("GROQ_MODEL") or "openai/gpt-oss-120b"
+
+    def analyze(self, ctx: AnalysisContext) -> dict:
+        prompt = build_prompt(ctx.chain, ctx.address, ctx.source_code, ctx.static_findings)
+        resp = self._client.chat.completions.create(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        text = resp.choices[0].message.content
+        return _parse_json_response(text)
+
+
+class GeminiProvider(ModelProvider):
+    name = "Gemini"
+
+    def __init__(self, model: str = None):
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ProviderError("GEMINI_API_KEY not set")
+        from google import genai
+
+        self._client = genai.Client(api_key=api_key)
+        # Same caveat as Groq above — verify at ai.google.dev/gemini-api/docs/models
+        # before relying on this default; override via GEMINI_MODEL. Same
+        # empty-string-vs-absent fix as Groq's model resolution above.
+        self._model = model or os.environ.get("GEMINI_MODEL") or "gemini-2.5-flash"
+
+    def analyze(self, ctx: AnalysisContext) -> dict:
+        from google.genai.types import GenerateContentConfig
+
+        prompt = build_prompt(ctx.chain, ctx.address, ctx.source_code, ctx.static_findings)
+        resp = self._client.models.generate_content(
+            model=self._model,
+            contents=prompt,
+            config=GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+        )
+        return _parse_json_response(resp.text)
+
+
 # Findings/rules a real model would treat as an automatic escalation, used
 # to give the mock personas defensible (not random) behavior.
 _SEVERITY_WEIGHT = {"critical": 3, "high": 2, "medium": 1, "low": 0, "info": 0}
@@ -159,23 +231,53 @@ class MockProvider(ModelProvider):
         return {"risk_category": "safe", "rationale": "No security-relevant findings beyond informational."}
 
 
+# (identifier, env var, provider class) — priority order used to fill each
+# consensus slot below. Same identifier is never used twice across slots,
+# so having only one real key configured doesn't silently ask the same
+# model the same question 3x under different slot names (that would
+# fabricate "agreement" instead of real independent judgment).
+_CANDIDATES = [
+    ("groq", "GROQ_API_KEY", GroqProvider),
+    ("gemini", "GEMINI_API_KEY", GeminiProvider),
+    ("anthropic", "ANTHROPIC_API_KEY", AnthropicProvider),
+    ("openai", "OPENAI_API_KEY", OpenAIProvider),
+]
+
+
+def _pick_real_provider(priority_order: list, used: set):
+    """Returns the first not-yet-used candidate (by identifier) from
+    priority_order that has its API key configured, or None."""
+    by_id = {c[0]: c for c in _CANDIDATES}
+    for identifier in priority_order:
+        if identifier in used:
+            continue
+        _, env_var, cls = by_id[identifier]
+        if os.environ.get(env_var):
+            used.add(identifier)
+            return cls()
+    return None
+
+
 def get_default_providers() -> list:
-    """The only place that decides real vs. mock. Add ANTHROPIC_API_KEY /
-    OPENAI_API_KEY to .env and these swap to live models automatically."""
+    """The only place that decides real vs. mock. Add GROQ_API_KEY /
+    GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY to .env and these
+    swap to live models automatically — no other code changes needed.
+
+    Stack: Groq primary, Gemini/Anthropic fallback (per TODO.md Phase 5).
+    Each slot tries its priority list in order, skipping any identifier
+    already used by an earlier slot, and falls back to a mock persona only
+    if nothing real is left to try.
+    """
+    used = set()
     providers = []
 
-    if os.environ.get("ANTHROPIC_API_KEY"):
-        providers.append(AnthropicProvider())
-    else:
-        providers.append(MockProvider("Claude", persona="conservative"))
+    p = _pick_real_provider(["groq", "gemini", "anthropic"], used)
+    providers.append(p or MockProvider("Groq", persona="conservative"))
 
-    if os.environ.get("OPENAI_API_KEY"):
-        providers.append(OpenAIProvider())
-    else:
-        providers.append(MockProvider("GPT-4", persona="balanced"))
+    p = _pick_real_provider(["gemini", "anthropic", "groq"], used)
+    providers.append(p or MockProvider("Gemini", persona="balanced"))
 
-    # Third opinion, always mock for now — swap for a real third model
-    # (e.g. another Anthropic model, Gemini) by replacing this line.
-    providers.append(MockProvider("Consensus-3", persona="balanced"))
+    p = _pick_real_provider(["anthropic", "openai", "groq", "gemini"], used)
+    providers.append(p or MockProvider("Consensus-3", persona="balanced"))
 
     return providers

@@ -9,6 +9,7 @@ import PillButton from '../components/PillButton'
 import VerdictChip from '../components/VerdictChip'
 import { VERDICTS } from '../lib/verdict'
 import { useAuth } from '../context/AuthContext'
+import { API_BASE_URL } from '../lib/api'
 
 const MOCK_STATIC_FINDINGS = {
   safe: [],
@@ -125,7 +126,7 @@ export default function Dashboard() {
       const t3 = setTimeout(() => setStep(3), 2400)
 
       const token = localStorage.getItem('vetra_session_token')
-      const resp = await fetch('http://localhost:4023/api/audit', {
+      const resp = await fetch(`${API_BASE_URL}/api/audit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

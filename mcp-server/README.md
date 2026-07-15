@@ -127,6 +127,27 @@ This is the real end-to-end proof the TODO asks for ("confirm billing
 actually works, not just wired up") — a genuine signed payment, verified
 on-chain, not a mocked/stubbed settlement.
 
+## Rate limiting on the live backend (`auth_server.py`)
+
+This directory has two separate servers: the standalone x402/MCP-protocol
+server above (`server.py` + `facilitator.py`, not yet deployed anywhere),
+and `auth_server.py` — a plain FastAPI REST backend the frontend actually
+calls today (SIWE login, API keys, usage logs, and the real `/api/audit` +
+`/api/simulate` pipeline execution). `rate_limit.py` above only protects
+the former; `auth_server.py` had no rate limiting at all until now.
+
+`rate_limit_http.py` — same fixed-window design as `rate_limit.py`, wired
+into every endpoint in `auth_server.py`:
+
+- `/api/auth/nonce`, `/api/auth/login` (no verified identity yet) — IP-keyed, 10 calls/60s.
+- `/api/audit`, `/api/simulate` (real compute + a real on-chain attestation write per call) — wallet-keyed, 10 calls/60s.
+- `/api/api-keys`, `/api/usage` (cheap, already authenticated) — wallet-keyed, more generous at 60 calls/60s.
+
+Verified live, not just unit-tested: hammered `/api/auth/nonce` past its
+limit through a real HTTP request and got actual `429`s back; separately
+confirmed wallet-keyed buckets are isolated per address (one wallet
+exceeding its limit doesn't block a different wallet).
+
 ## Explicitly not done — needs your account/decision, not just more code
 
 - **Deploy to an always-on host.** Needs your hosting account (Fly.io,

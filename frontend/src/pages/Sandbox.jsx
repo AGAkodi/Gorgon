@@ -9,6 +9,7 @@ import DeviceFrame from '../components/DeviceFrame'
 import VerdictChip from '../components/VerdictChip'
 import { useCountTo } from '../lib/useCountTo'
 import { useAuth } from '../context/AuthContext'
+import { API_BASE_URL } from '../lib/api'
 
 const MOCK_APPROVALS = [
   { spender: '0x00f2...dra1n', asset: 'USDC', amount: 'unlimited', unlimited: true, known_drainer: true },
@@ -64,9 +65,30 @@ export default function Sandbox() {
   const preloadedTarget = location.state?.target || ''
   const preloadedType = location.state?.type || 'contract'
 
-  const [target, setTarget] = useState(preloadedTarget || '0xb45052dd52e14591c5cb4307e8fbd4bc11608f20')
+  const [target, setTarget] = useState(preloadedTarget || '')
   const [status, setStatus] = useState('idle')
   const [step, setStep] = useState(0)
+
+  // Sandbox environment config (decoy wallet, mock token, drainer contract) —
+  // fetched from the server's own fork/deployment rather than hardcoded, since
+  // hardcoded addresses go stale the moment the fork restarts or the decoy
+  // wallet's key changes (this broke silently before — see auth_server.py's
+  // /api/sandbox/config for why).
+  const [sandboxConfig, setSandboxConfig] = useState(null)
+  const [sandboxConfigError, setSandboxConfigError] = useState(null)
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/sandbox/config`)
+      .then((resp) => {
+        if (!resp.ok) throw new Error('Sandbox environment not ready on the server yet.')
+        return resp.json()
+      })
+      .then((config) => {
+        setSandboxConfig(config)
+        if (!preloadedTarget) setTarget(config.token_address)
+      })
+      .catch((err) => setSandboxConfigError(err.message))
+  }, [])
 
   // Real static simulation state
   const [approvals, setApprovals] = useState([])
@@ -202,12 +224,18 @@ export default function Sandbox() {
 
   const handleStaticSimulate = async (e) => {
     e.preventDefault()
+
+    if (!sandboxConfig) {
+      alert(sandboxConfigError || 'Sandbox environment still loading — try again in a moment.')
+      return
+    }
+
     setStatus('running')
     setStep(0)
 
     try {
       const token = localStorage.getItem('vetra_session_token')
-      
+
       const t1 = setTimeout(() => setStep(1), 800)
       const t2 = setTimeout(() => setStep(2), 1600)
 
@@ -215,9 +243,9 @@ export default function Sandbox() {
 
       const payload = {
         chain: 'evm',
-        decoy_wallet: '0x252640910FD5c7aE150058CC9871B4C87ab2F7A1',
-        target: isCalldata ? '0xb45052dd52e14591c5cb4307e8fbd4bc11608f20' : target.trim(),
-        tracked_tokens: ['0xb45052dd52e14591c5cb4307e8fbd4bc11608f20'],
+        decoy_wallet: sandboxConfig.decoy_wallet,
+        target: isCalldata ? sandboxConfig.token_address : target.trim(),
+        tracked_tokens: [sandboxConfig.token_address],
       }
 
       if (isCalldata) {
@@ -225,12 +253,12 @@ export default function Sandbox() {
       } else {
         payload.function_signature = 'approve(address,uint256)'
         payload.args = [
-          '0x5f401c9cf95cb75bc8b28981d3d77b6513ad652a',
+          sandboxConfig.drainer_address,
           '115792089237316195423570985008687907853269984665640564039457584007913129639935'
         ]
       }
 
-      const resp = await fetch('http://localhost:4023/api/simulate', {
+      const resp = await fetch(`${API_BASE_URL}/api/simulate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -331,10 +359,23 @@ export default function Sandbox() {
               required
             />
           </div>
-          <PillButton as="button" type="submit" variant="primary" disabled={status === 'running'} className="bg-brand text-bg font-bold whitespace-nowrap">
-            {status === 'running' ? 'Simulating…' : 'Simulate Tx'}
+          <PillButton
+            as="button"
+            type="submit"
+            variant="primary"
+            disabled={status === 'running' || (!sandboxConfig && !sandboxConfigError)}
+            className="bg-brand text-bg font-bold whitespace-nowrap"
+          >
+            {status === 'running'
+              ? 'Simulating…'
+              : !sandboxConfig && !sandboxConfigError
+                ? 'Loading sandbox…'
+                : 'Simulate Tx'}
           </PillButton>
         </form>
+        {sandboxConfigError && (
+          <p className="mt-2 text-xs text-verdict-critical">{sandboxConfigError}</p>
+        )}
 
         <div className="mt-8">
           <DeviceFrame>
@@ -346,7 +387,7 @@ export default function Sandbox() {
                     <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
                     Sandbox Wallet (Simulated)
                   </span>
-                  <span className="font-mono text-xs text-muted">0x252640910FD5c7aE150058CC9871B4C87ab2F7A1</span>
+                  <span className="font-mono text-xs text-muted">{sandboxConfig?.decoy_wallet || 'loading...'}</span>
                 </div>
                 <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500 border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 rounded-md">
                   SIMULATED

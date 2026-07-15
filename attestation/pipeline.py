@@ -12,7 +12,7 @@ import urllib.request
 from datetime import datetime, timezone
 import env  # noqa: F401 (loads .env into os.environ on import)
 from eth_account import Account
-from eth_utils import keccak
+from eth_utils import keccak, to_checksum_address
 import eth_abi
 from hexbytes import HexBytes
 
@@ -86,7 +86,7 @@ def attest(chain: str, address: str, verdict: str, timestamp: int = None) -> dic
     # 4. Construct transaction
     tx = {
         "nonce": nonce_val,
-        "to": contract,
+        "to": to_checksum_address(contract),
         "value": 0,
         "gas": 150000,
         "gasPrice": gas_price,

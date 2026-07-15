@@ -1,0 +1,35 @@
+# Consolidated runtime requirements for deploying the backend
+# (mcp-server/auth_server.py, facilitator.py, server.py) to an always-on
+# host. Combines what each phase's own requirements.txt already lists
+# (static-analysis/evm, consensus, sandbox, mcp-server) — those per-directory
+# files remain the source of truth for local dev; this is what Docker builds
+# from.
+
+# --- Web framework ---
+fastapi
+uvicorn
+pydantic
+
+# --- Auth / chain interaction ---
+PyJWT
+eth_account
+eth_abi
+eth_utils
+hexbytes
+requests
+
+# --- Static analysis (Phase 1) ---
+slither-analyzer==0.11.5
+
+# --- Consensus (Phase 2/5) ---
+anthropic
+openai
+groq
+google-genai
+
+# --- Payment (Phase 6) ---
+mcp
+x402
+
+# --- Sandbox / validation tooling ---
+jsonschema

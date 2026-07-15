@@ -5,6 +5,7 @@ import Footer from '../components/Footer'
 import PillButton from '../components/PillButton'
 import { ShieldAlert, Copy, Check, Plus, Trash2, KeyRound, Eye } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { API_BASE_URL } from '../lib/api'
 
 export default function ApiKeys() {
   const { isConnected, triggerLogin, walletAddress } = useAuth()
@@ -16,7 +17,7 @@ export default function ApiKeys() {
   const fetchKeys = async () => {
     try {
       const token = localStorage.getItem('vetra_session_token')
-      const resp = await fetch('http://localhost:4023/api/api-keys', {
+      const resp = await fetch(`${API_BASE_URL}/api/api-keys`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -47,7 +48,7 @@ export default function ApiKeys() {
     if (!newKeyName) return
     try {
       const token = localStorage.getItem('vetra_session_token')
-      const resp = await fetch('http://localhost:4023/api/api-keys', {
+      const resp = await fetch(`${API_BASE_URL}/api/api-keys`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -74,7 +75,7 @@ export default function ApiKeys() {
     if (!confirm('Are you sure you want to revoke this API key? This action is irreversible.')) return
     try {
       const token = localStorage.getItem('vetra_session_token')
-      const resp = await fetch(`http://localhost:4023/api/api-keys/${keyHash}`, {
+      const resp = await fetch(`${API_BASE_URL}/api/api-keys/${keyHash}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -1,0 +1,62 @@
+# Runs the full backend: the auth gateway the frontend actually talks to,
+# the x402 facilitator + standalone MCP server for real agent traffic, and
+# an EVM fork sidecar for /api/simulate. See DEPLOYMENT.md for how to take
+# this to an actual host (Fly.io/Railway/VPS) rather than just local
+# docker-compose.
+#
+# Usage: docker compose up -d
+services:
+  evm-fork:
+    image: ghcr.io/foundry-rs/foundry:latest
+    entrypoint: ["anvil"]
+    command: ["--fork-url", "${EVM_MAINNET_FORK_RPC_URL:-https://ethereum-rpc.publicnode.com}", "--host", "0.0.0.0", "--port", "8545"]
+    ports:
+      - "8555:8545"
+    restart: unless-stopped
+
+  auth-server:
+    build: .
+    command: ["python3", "mcp-server/auth_server.py"]
+    env_file: .env
+    environment:
+      AUTH_SERVER_PORT: "4023"
+      EVM_FORK_RPC_URL: "http://evm-fork:8545"
+    ports:
+      - "4023:4023"
+    depends_on:
+      - evm-fork
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4023/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  facilitator:
+    build: .
+    command: ["python3", "mcp-server/facilitator.py"]
+    env_file: .env
+    environment:
+      FACILITATOR_PORT: "4022"
+    ports:
+      - "4022:4022"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4022/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  mcp-server:
+    build: .
+    command: ["python3", "mcp-server/server.py"]
+    env_file: .env
+    environment:
+      MCP_SERVER_PORT: "4021"
+      FACILITATOR_URL: "http://facilitator:4022"
+    ports:
+      - "4021:4021"
+    depends_on:
+      - facilitator
+      - evm-fork
+    restart: unless-stopped

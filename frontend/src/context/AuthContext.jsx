@@ -1,7 +1,23 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getInjectedProvider, ensureXLayerChain } from '../lib/xlayer'
+import { API_BASE_URL } from '../lib/api'
 
 const AuthContext = createContext()
+
+// fetch() throws a generic "Failed to fetch" / "NetworkError" with no useful
+// detail when the server simply isn't running — this turns that into an
+// actionable message instead of leaving whoever hits it to guess.
+async function fetchAuthServer(path, options) {
+  try {
+    return await fetch(`${API_BASE_URL}${path}`, options)
+  } catch (err) {
+    throw new Error(
+      `Could not reach the Vetra auth server at ${API_BASE_URL}. ` +
+      `Make sure it's running: python3 mcp-server/auth_server.py`
+    )
+  }
+}
 
 export function AuthProvider({ children }) {
   const [walletAddress, setWalletAddress] = useState(() => localStorage.getItem('vetra_wallet_address'))
@@ -9,14 +25,17 @@ export function AuthProvider({ children }) {
   const [isSigning, setIsSigning] = useState(false)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState(null)
+  const [pendingSiweMessage, setPendingSiweMessage] = useState(null)
   const navigate = useNavigate()
 
   const isConnected = !!walletAddress && !!sessionToken
 
   const triggerLogin = () => {
+    // "Get Started" goes straight to OKX Wallet — no wallet-picker step for
+    // the primary path. The modal still opens to show connection/signing
+    // progress, with a fallback link inside it for other injected wallets.
     setShowAuthModal(true)
-    setSelectedWallet(null)
-    setIsSigning(false)
+    connectWallet('OKX Wallet')
   }
 
   const connectWallet = (walletName) => {
@@ -24,40 +43,51 @@ export function AuthProvider({ children }) {
     setIsSigning(true)
     // Trigger signature request immediately
     setTimeout(() => {
-      signMessage()
+      signMessage(walletName)
     }, 100)
   }
 
-  const signMessage = async () => {
+  const signMessage = async (walletName = selectedWallet) => {
     try {
-      if (!window.ethereum) {
-        alert('No EVM wallet detected. Please install OKX Wallet.')
+      const preferOkx = walletName !== 'Other Wallet'
+      const provider = getInjectedProvider(preferOkx)
+
+      if (!provider) {
+        alert(
+          preferOkx
+            ? 'OKX Wallet not detected. Install it from okx.com/web3, or choose "Other Wallet" if you have a different EVM wallet installed.'
+            : 'No EVM wallet detected in this browser.'
+        )
         setIsSigning(false)
         return
       }
 
       // 1. Get wallet address
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      const accounts = await provider.request({ method: 'eth_requestAccounts' })
       if (!accounts || accounts.length === 0) {
         throw new Error('No accounts returned from wallet')
       }
       const address = accounts[0]
 
-      // 2. Request SIWE message/nonce from auth server
-      const nonceResp = await fetch(`http://localhost:4023/api/auth/nonce?address=${address}`)
+      // 2. Confirm/switch to X Layer before going any further
+      await ensureXLayerChain(provider)
+
+      // 3. Request SIWE message/nonce from auth server
+      const nonceResp = await fetchAuthServer(`/api/auth/nonce?address=${address}`)
       if (!nonceResp.ok) {
         throw new Error('Failed to retrieve authentication nonce from server')
       }
       const { message } = await nonceResp.json()
+      setPendingSiweMessage(message)
 
-      // 3. Request signature from wallet
-      const signature = await window.ethereum.request({
+      // 4. Request signature from wallet
+      const signature = await provider.request({
         method: 'personal_sign',
         params: [message, address],
       })
 
-      // 4. Send signature to server
-      const loginResp = await fetch('http://localhost:4023/api/auth/login', {
+      // 5. Send signature to server
+      const loginResp = await fetchAuthServer('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +105,7 @@ export function AuthProvider({ children }) {
 
       const { token, walletAddress: verifiedAddress } = await loginResp.json()
 
-      // 5. Store session and transition UI
+      // 6. Store session and transition UI
       localStorage.setItem('vetra_session_token', token)
       localStorage.setItem('vetra_wallet_address', verifiedAddress)
       setWalletAddress(verifiedAddress)
@@ -83,12 +113,14 @@ export function AuthProvider({ children }) {
       setShowAuthModal(false)
       setIsSigning(false)
       setSelectedWallet(null)
+      setPendingSiweMessage(null)
       navigate('/dashboard')
     } catch (err) {
       console.error('Wallet authentication failure:', err)
       alert(err.message || 'Authentication failed. Please try again.')
       setIsSigning(false)
       setSelectedWallet(null)
+      setPendingSiweMessage(null)
     }
   }
 
@@ -111,9 +143,11 @@ export function AuthProvider({ children }) {
         isSigning,
         showAuthModal,
         selectedWallet,
+        pendingSiweMessage,
         setShowAuthModal,
         triggerLogin,
         connectWallet,
+        useOtherWallet: () => connectWallet('Other Wallet'),
         signMessage,
         disconnect,
       }}

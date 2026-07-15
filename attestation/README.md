@@ -141,3 +141,75 @@ wanted.
 Full per-contract results: `attestation/data/phase7_validation_report.json`
 (gitignored, regenerate via `python3 attestation/run_phase7_validation.py`
 — requires all 4 solc versions installed: 0.7.6, 0.8.10, 0.8.17, 0.8.20).
+
+## Re-run with real consensus (TODO.md Phase 5, 2026-07-13)
+
+The validation above was mock-only. `consensus/providers.py` now has real
+`GroqProvider`/`GeminiProvider` classes (Groq primary, Gemini/Anthropic
+fallback per TODO.md), and a real `GROQ_API_KEY` landed in `.env` this
+session — so this is the first run with genuine LLM inference in the
+panel (Groq real; Gemini/Anthropic slots still mock, no keys for those yet).
+
+**Result: 7/14 passed, false positive rate 7/11 on real clean contracts —
+essentially unchanged from the mock-only run.** But the *reason* changed,
+and that's the actual finding:
+
+- **2 real failures, unrelated to model quality:** `seaport_1_4` hit
+  Groq's rate limit outright (413 — Seaport's flattened multi-file source
+  is 28,437 tokens, Groq's free/on-demand tier caps at 8,000 TPM).
+  `uniswap_universal_router` still fails to compile (same pre-existing
+  Sourcify-bundled-source-missing-dependencies issue documented above,
+  nothing to do with consensus).
+- **The false positives are not purely a mock-heuristic artifact anymore,
+  but the mock personas are still doing most of the damage.** Two of the
+  three panel slots (`Gemini`, `Consensus-3`) are still `MockProvider`
+  instances running the *identical* deterministic "balanced" heuristic on
+  the same static findings — meaning they always agree with each other,
+  and the only independent voice is Groq. Confidence `0.47` on every
+  failing case confirms this mechanically (exactly 2-of-3 agreement, per
+  the consensus formula) — Groq is disagreeing with the mock pair every
+  time.
+
+  Directly re-ran `aave_v3_pool_proxy` (verified in isolation, not just
+  inferred from the summary) to see who actually said what:
+
+  ```text
+  resolved verdict: high_risk  confidence: 0.47
+    Groq         caution    "thin proxy relying on parent implementations that include
+                             delegatecalls and upgrade functions; while the admin is
+                             immutable, the initialize/upgrade pathways ... could be
+                             misused if access control is insufficient, posing moderate risk"
+    Gemini       high_risk  "A high-severity finding is present..." (mock, generic)
+    Consensus-3  high_risk  "A high-severity finding is present..." (mock, generic)
+  ```
+
+  Groq's real answer here is the *better* one — it correctly reasons about
+  the immutable admin mitigating the upgrade risk, something the mock's
+  severity-count heuristic structurally cannot do. The fail-closed policy
+  (escalate to the most severe of any disagreement) picked the mocks'
+  cruder `high_risk` over Groq's more accurate `caution`. This is the
+  disagreement-handling design working exactly as built (Phase 2) — it's
+  correctly refusing to silently average away a real disagreement — but
+  it means **the more mock voices are in the panel, the more the fail-
+  closed policy gets dragged toward their crude heuristic**, even when the
+  real model in the room is reasoning better.
+
+- **The actionable implication:** adding `GEMINI_API_KEY` and/or
+  `ANTHROPIC_API_KEY` is likely to reduce false positives more than
+  tuning anything else, since it replaces the crude, context-blind mock
+  voters with real judgment too — which is exactly what "Groq primary,
+  Gemini/Anthropic fallback" was designed to do once more keys exist.
+
+**Real bug fixed in the process:** `GROQ_MODEL=` / `GEMINI_MODEL=` (present
+but empty in `.env`) were silently resolving to `""` instead of falling
+back to their hardcoded defaults — `os.environ.get(key, default)`'s
+default only applies when the key is *absent*, not when it's present but
+empty. Fixed in `consensus/providers.py` (`model or os.environ.get(...) or
+default`, not `model or os.environ.get(..., default)`). Also fixed:
+`consensus/providers.py` didn't load `.env` on its own, so
+`get_default_providers()` silently fell back to mock when imported
+standalone rather than through the full pipeline — it now loads `.env`
+itself, same as `attestation/pipeline.py` does.
+
+Full report: `attestation/data/phase7_validation_report.json` (regenerate
+via `python3 attestation/run_phase7_validation.py`).

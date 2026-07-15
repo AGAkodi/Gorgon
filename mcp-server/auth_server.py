@@ -2,18 +2,21 @@ import os
 import sys
 import secrets
 import hashlib
+import subprocess
 import time
 import sqlite3
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, Header, Depends, Query
+from fastapi import FastAPI, HTTPException, Header, Depends, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from eth_account import Account
 from eth_account.messages import encode_defunct
 import requests
 import jwt
+
+from rate_limit_http import check_auth_rate_limit, check_pipeline_rate_limit, check_light_rate_limit
 
 # Load env from workspace .env
 env_path = Path(__file__).parent.parent / ".env"
@@ -36,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "exploit-intel"))
 from full_pipeline import run_verdict_pipeline
 from simulate import simulate_call
 from cache import cache_key
+from deploy_contracts import deploy_sandbox, decoy_wallet_address, FORK_RPC as SANDBOX_FORK_RPC
 
 # --- SQLite Local Fallback Database Helper ---
 DB_FILE = Path(__file__).parent.parent / "vetra_local.db"
@@ -183,6 +187,57 @@ else:
 if USE_SQLITE:
     db_helper = LocalDBHelper()
 
+# --- Sandbox environment (fork + mock contracts) ---
+# Previously this was entirely manual: someone had to start the fork,
+# run sandbox/deploy_contracts.py by hand, then hardcode the resulting
+# addresses into the frontend. That breaks every time the fork restarts
+# (fresh addresses) or SANDBOX_DECOY_WALLET_PRIVATE_KEY changes (as it did
+# during an earlier .env desync) — the frontend's hardcoded decoy_wallet
+# silently stopped matching the actual funded wallet. Fixed by making this
+# server self-sufficient: ensure a fork is up (start one if not), deploy
+# fresh contracts against it, and serve the real current addresses via
+# /api/sandbox/config instead of anyone hardcoding them.
+SANDBOX_CONFIG = None
+
+
+def _fork_is_up(rpc_url: str) -> bool:
+    try:
+        resp = requests.post(
+            rpc_url, timeout=3,
+            json={"jsonrpc": "2.0", "method": "eth_chainId", "params": [], "id": 1},
+        )
+        return resp.status_code == 200 and "result" in resp.json()
+    except Exception:
+        return False
+
+
+def _ensure_sandbox_ready():
+    global SANDBOX_CONFIG
+    if not _fork_is_up(SANDBOX_FORK_RPC):
+        print(f"[sandbox] EVM fork not reachable at {SANDBOX_FORK_RPC}, starting one...")
+        fork_script = Path(__file__).parent.parent / "sandbox" / "fork" / "start-evm-fork.sh"
+        subprocess.Popen(
+            [str(fork_script)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        for _ in range(30):
+            if _fork_is_up(SANDBOX_FORK_RPC):
+                break
+            time.sleep(1)
+        else:
+            print(f"[sandbox] WARNING: fork did not come up within 30s — /api/simulate and "
+                  f"/api/sandbox/config will fail until it does. Check {fork_script} manually.")
+            return
+
+    try:
+        decoy = decoy_wallet_address()
+        SANDBOX_CONFIG = deploy_sandbox(decoy)
+        print(f"[sandbox] ready: {SANDBOX_CONFIG}")
+    except Exception as e:
+        print(f"[sandbox] WARNING: contract deployment failed: {e}")
+
+
+_ensure_sandbox_ready()
+
 # Temporary challenge/nonces database in memory
 challenges = {}  # wallet_address -> (nonce, message, expiry)
 
@@ -211,7 +266,8 @@ class SimulateRequest(BaseModel):
 
 # SIWE Nonce Generator
 @app.get("/api/auth/nonce")
-def get_nonce(address: str):
+def get_nonce(request: Request, address: str):
+    check_auth_rate_limit(request)
     if not address:
         raise HTTPException(status_code=400, detail="Address parameter is required")
     address = address.lower()
@@ -235,7 +291,8 @@ def get_nonce(address: str):
 
 # SIWE Signature Verification
 @app.post("/api/auth/login")
-def login(req: LoginRequest):
+def login(req: LoginRequest, request: Request):
+    check_auth_rate_limit(request)
     addr = req.address.lower()
     if addr not in challenges:
         raise HTTPException(status_code=400, detail="No active challenge for this address")
@@ -314,6 +371,7 @@ def get_current_user(authorization: str = Header(None)):
 # API Keys Management
 @app.get("/api/api-keys")
 def get_api_keys(user: str = Depends(get_current_user)):
+    check_light_rate_limit(user)
     if USE_SQLITE:
         return db_helper.get_api_keys(user)
     else:
@@ -325,6 +383,7 @@ def get_api_keys(user: str = Depends(get_current_user)):
 
 @app.post("/api/api-keys")
 def create_api_key(req: ApiKeyCreate, user: str = Depends(get_current_user)):
+    check_light_rate_limit(user)
     raw_key = "vt_" + secrets.token_urlsafe(24)
     hashed_key = hashlib.sha256(raw_key.encode()).hexdigest()
     
@@ -346,6 +405,7 @@ def create_api_key(req: ApiKeyCreate, user: str = Depends(get_current_user)):
 
 @app.delete("/api/api-keys/{key_hash}")
 def delete_api_key(key_hash: str, user: str = Depends(get_current_user)):
+    check_light_rate_limit(user)
     if USE_SQLITE:
         db_helper.delete_api_key(key_hash, user)
         return {"status": "success"}
@@ -362,6 +422,7 @@ def delete_api_key(key_hash: str, user: str = Depends(get_current_user)):
 # Usage Logs
 @app.get("/api/usage")
 def get_usage(user: str = Depends(get_current_user)):
+    check_light_rate_limit(user)
     if USE_SQLITE:
         return db_helper.get_usage_logs(user)
     else:
@@ -369,6 +430,14 @@ def get_usage(user: str = Depends(get_current_user)):
         if resp.status_code == 200:
             return resp.json()
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
+
+
+# Health check — for uptime monitoring and container orchestration
+# liveness/readiness probes. Deliberately cheap (no DB/RPC round trip) so
+# it stays fast and doesn't itself become a source of false alarms.
+@app.get("/health")
+def health():
+    return {"status": "ok", "db_backend": "sqlite" if USE_SQLITE else "supabase"}
 
 
 # Pricing Config
@@ -383,6 +452,7 @@ def get_pricing():
 # Verdict Pipeline Execution
 @app.post("/api/audit")
 def run_audit(req: AuditRequest, user: str = Depends(get_current_user)):
+    check_pipeline_rate_limit(user)
     # Check cache first
     key = cache_key(req.chain, req.address, req.source_code)
     
@@ -437,9 +507,23 @@ def run_audit(req: AuditRequest, user: str = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# Sandbox environment config — the real, current addresses from this
+# server's own fork/deployment, not something the frontend should hardcode.
+@app.get("/api/sandbox/config")
+def get_sandbox_config():
+    if SANDBOX_CONFIG is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Sandbox environment not ready — the EVM fork or contract deployment "
+                   "failed at server startup. Check the server logs for the [sandbox] warning.",
+        )
+    return SANDBOX_CONFIG
+
+
 # Simulation Pipeline Execution
 @app.post("/api/simulate")
 def run_simulation(req: SimulateRequest, user: str = Depends(get_current_user)):
+    check_pipeline_rate_limit(user)
     try:
         # Run Tenderly/Anvil simulation
         result = simulate_call(
