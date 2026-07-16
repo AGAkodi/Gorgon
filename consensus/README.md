@@ -51,6 +51,38 @@ testing — once real API keys are added, actual models are expected to
 reason about ordering correctly and this specific false positive should
 disappear. Re-run `test_consensus.py` after adding keys to confirm.
 
-Not yet done: live verification against real Claude/GPT calls (blocked on
-`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` in `.env`), and Solana-side testing
-(out of scope for now, see `TODO.md`).
+Not yet done: live verification against real Anthropic/OpenAI calls
+(`ANTHROPIC_API_KEY` is in `.env` but the account has no credit balance —
+see below; `OPENAI_API_KEY` still unset), and Solana-side testing (out of
+scope for now, see `TODO.md`). Groq is live and verified — see
+`attestation/README.md` "Re-run with real consensus".
+
+## Real bug found and fixed (2026-07-15): a funded-but-billing-failed key crashed the whole verdict
+
+Adding a real `ANTHROPIC_API_KEY` (valid key, but the Anthropic account had
+no credit balance) crashed every single `/api/audit` call — confirmed
+directly, not assumed:
+
+```text
+BadRequestError: Error code: 400 - {'type': 'error', 'error': {'type':
+'invalid_request_error', 'message': 'Your credit balance is too low to
+access the Anthropic API. Please go to Plans & Billing to upgrade or
+purchase credits.'}}
+```
+
+`engine.py`'s per-provider error handling only caught our own
+`ProviderError` (raised for a missing key) — any other failure from a real
+provider's SDK (rate limits, billing errors, network timeouts, malformed
+responses) propagated straight through `ThreadPoolExecutor` and crashed
+the entire consensus call, taking down the whole verdict with it. Fixed by
+broadening that catch to `Exception`: a failing provider now degrades to
+the remaining providers (same as a missing key), with the failure recorded
+in `provider_errors` rather than crashing anything. Verified both ways —
+direct unit test and a real HTTP `/api/audit` call with the unfunded key
+still in `.env` — both now return a normal `200` with a correct verdict
+from the providers that did work (Groq + mock, in this case), instead of
+a 500.
+
+Practical note for reference: the Anthropic **API** (console.anthropic.com)
+bills separately from any Claude.ai chat subscription (Pro/Team/etc.) — a
+funded API balance is a separate purchase, not included with a chat plan.

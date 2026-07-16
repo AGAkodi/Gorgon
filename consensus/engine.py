@@ -14,7 +14,7 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from providers import AnalysisContext, ProviderError, get_default_providers
+from providers import AnalysisContext, get_default_providers
 
 SEVERITY_ORDER = {"safe": 0, "caution": 1, "high_risk": 2, "critical": 3}
 
@@ -36,7 +36,14 @@ def run_consensus(ctx: AnalysisContext, providers=None) -> dict:
         for future, provider in futures.items():
             try:
                 model_consensus.append(future.result())
-            except ProviderError as exc:
+            except Exception as exc:
+                # Broad on purpose: a provider can fail for reasons far
+                # beyond our own ProviderError (missing key) — rate limits,
+                # billing/credit errors, network timeouts, malformed SDK
+                # responses. One real model's account running out of
+                # credits (confirmed happening with a live key) must not
+                # crash the entire verdict for every caller; it should
+                # degrade to the remaining providers, same as a missing key.
                 errors.append({"model": provider.name, "error": str(exc)})
 
     if not model_consensus:

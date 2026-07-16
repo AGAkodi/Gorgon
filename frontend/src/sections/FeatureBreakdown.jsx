@@ -1,18 +1,18 @@
 import { motion } from 'framer-motion'
-import { Search, Globe, Code, ShieldCheck, Terminal, Compass } from 'lucide-react'
+import { Search, Globe, Code, ShieldCheck, Coins, Compass } from 'lucide-react'
 
 const FEATURES = [
   {
     icon: Search,
     title: 'Smart Contract Auditing',
-    desc: 'Audit EVM/Solana contracts instantly. Runs Slither, Anchor tools, compiler verification, and multi-model consensus checks.',
+    desc: 'Audit EVM contracts instantly. Runs Slither, compiler verification, and multi-model consensus checks.',
     tag: null,
   },
   {
     icon: Globe,
     title: 'Web Link Verification',
     desc: 'Input landing pages or dApp domains. Scrapes the frontend and detects malicious wallet drainage code scripts before interaction.',
-    tag: null,
+    tag: 'In Hardening',
   },
   {
     icon: ShieldCheck,
@@ -24,6 +24,12 @@ const FEATURES = [
     icon: Compass,
     title: 'Simulation Sandbox',
     desc: 'Streams a live, user-driven session in an isolated container. Intercepts all signature actions and calculates asset balance deltas.',
+    tag: null,
+  },
+  {
+    icon: Coins,
+    title: 'Pay-Per-Call Billing',
+    desc: 'No subscriptions, no negotiation. Every verdict and simulation settles instantly via x402 on X Layer — billed only for what you actually verify.',
     tag: null,
   },
   {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Hash, ExternalLink, ShieldAlert, Cpu, Eye, CheckCircle2, AlertTriangle, ShieldCheck } from 'lucide-react'
+import { Search, Hash, ExternalLink, ShieldAlert, Cpu, Eye, CheckCircle2, AlertTriangle, ShieldCheck, ChevronDown, Code2 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, ResponsiveContainer } from 'recharts'
 import Nav from '../components/Nav'
 import Footer from '../components/Footer'
@@ -105,6 +105,13 @@ export default function Dashboard() {
   const [step, setStep] = useState(0)
   const [showPopup, setShowPopup] = useState(false)
 
+  // No block-explorer source-fetching integration exists yet, so without
+  // this the static analyzer always sees an empty source and correctly
+  // reports insufficient_data -> caution, regardless of what address is
+  // typed above. Paste real source here to actually exercise the analyzer.
+  const [sourceCode, setSourceCode] = useState('')
+  const [showSourceInput, setShowSourceInput] = useState(false)
+
   // Real audit state
   const [verdict, setVerdict] = useState('safe')
   const [staticFindings, setStaticFindings] = useState([])
@@ -135,7 +142,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           chain: 'evm',
           address: address.trim(),
-          source_code: ''
+          source_code: sourceCode.trim()
         })
       })
 
@@ -232,7 +239,7 @@ export default function Dashboard() {
             <input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder={type === 'contract' ? 'Contract Address (0x...) or Solana Program ID' : 'dApp URL Link (https://...)'}
+              placeholder={type === 'contract' ? 'Contract Address (0x...)' : 'dApp URL Link (https://...)'}
               className="w-full bg-transparent font-mono text-sm text-ink outline-none placeholder:text-muted"
               required
             />
@@ -253,6 +260,38 @@ export default function Dashboard() {
             {status === 'running' ? 'Auditing…' : 'Run Audit'}
           </PillButton>
         </form>
+
+        {/* Optional source paste — no block-explorer source-fetching
+            integration exists yet, so without this every scan correctly
+            reports insufficient_data -> caution regardless of address. */}
+        <button
+          type="button"
+          onClick={() => setShowSourceInput((v) => !v)}
+          className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors"
+        >
+          <Code2 size={13} />
+          Paste contract source (optional — no source lookup yet, so real findings need this)
+          <ChevronDown size={13} className={`transition-transform ${showSourceInput ? 'rotate-180' : ''}`} />
+        </button>
+        <AnimatePresence>
+          {showSourceInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <textarea
+                value={sourceCode}
+                onChange={(e) => setSourceCode(e.target.value)}
+                placeholder="// paste Solidity source here"
+                rows={8}
+                className="mt-2 w-full rounded-2xl border border-border bg-surface px-4 py-3 font-mono text-xs text-ink outline-none placeholder:text-muted focus:border-brand/50"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Threat Intelligence Flywheel Metrics */}
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
