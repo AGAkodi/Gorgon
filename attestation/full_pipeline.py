@@ -23,7 +23,7 @@ from analyze import analyze  # noqa: E402
 from engine import run_consensus  # noqa: E402
 from providers import AnalysisContext  # noqa: E402
 from similarity import match as exploit_match  # noqa: E402
-from pipeline import attest  # noqa: E402
+from pipeline import attest, AttestationError  # noqa: E402
 from cache import cache_key, get_cached, set_cached  # noqa: E402
 
 
@@ -64,9 +64,15 @@ def run_verdict_pipeline(chain: str, address: str, source_code: str, use_cache: 
             "model_consensus": [],
             "static_findings": [],
             "exploit_matches": [],
-            "attestation": attest(chain, address, "caution", int(time.time())),
             "cache_hit": False,
         }
+        try:
+            verdict["attestation"] = attest(chain, address, "caution", int(time.time()))
+        except AttestationError as exc:
+            # A transient RPC hiccup on the write must not discard the verdict
+            # itself — schema treats "attestation" as optional ("absent for
+            # verdicts not yet attested"), so omit it rather than fail closed.
+            print(f"[attestation] on-chain write failed, returning unattested verdict: {exc}")
         if use_cache:
             set_cached(key, verdict)
         return verdict
@@ -77,8 +83,6 @@ def run_verdict_pipeline(chain: str, address: str, source_code: str, use_cache: 
     function_signatures = _extract_function_signatures(source_code)
     exploit_matches = exploit_match(static_findings, function_signatures)
 
-    attestation = attest(chain, address, consensus_result["verdict"], int(time.time()))
-
     verdict = {
         "chain": chain,
         "address": address,
@@ -87,9 +91,15 @@ def run_verdict_pipeline(chain: str, address: str, source_code: str, use_cache: 
         "model_consensus": consensus_result["model_consensus"],
         "static_findings": static_findings,
         "exploit_matches": exploit_matches,
-        "attestation": attestation,
         "cache_hit": False,
     }
+    try:
+        verdict["attestation"] = attest(chain, address, consensus_result["verdict"], int(time.time()))
+    except AttestationError as exc:
+        # Same reasoning as the insufficient_data branch above: don't throw
+        # away real Slither + consensus results (already paid for in latency
+        # and API cost) just because the on-chain write hiccuped.
+        print(f"[attestation] on-chain write failed, returning unattested verdict: {exc}")
 
     if use_cache:
         set_cached(key, verdict)

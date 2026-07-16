@@ -174,17 +174,23 @@ async def main():
             assert verdict_result.payment_made is True
 
             print("\n=== Test 3: simulate_wallet_interaction (paid) ===")
-            print("(requires sandbox/deploy_contracts.py already run against a live fork)")
+            # Deploy fresh sandbox contracts against the live fork rather than
+            # hardcoding addresses — fork restarts invalidate old ones silently
+            # (same failure mode Sandbox.jsx had before /api/sandbox/config).
+            sys.path.insert(0, str(Path(__file__).parent.parent / "sandbox"))
+            from deploy_contracts import deploy_sandbox, decoy_wallet_address  # noqa: E402
+            sandbox_setup = deploy_sandbox(decoy_wallet_address())
+            print(f"(sandbox contracts deployed: {sandbox_setup})")
             sim_result = await x402_mcp.call_tool(
                 "simulate_wallet_interaction",
                 {
                     "chain": "evm",
-                    "decoy_wallet": "0x252640910FD5c7aE150058CC9871B4C87ab2F7A1",
-                    "target": "0xb45052dd52e14591c5cb4307e8fbd4bc11608f20",
-                    "tracked_tokens": ["0xb45052dd52e14591c5cb4307e8fbd4bc11608f20"],
+                    "decoy_wallet": decoy_wallet_address(),
+                    "target": sandbox_setup["token_address"],
+                    "tracked_tokens": [sandbox_setup["token_address"]],
                     "function_signature": "approve(address,uint256)",
                     "args": [
-                        "0x5f401c9cf95cb75bc8b28981d3d77b6513ad652a",
+                        sandbox_setup["drainer_address"],
                         "115792089237316195423570985008687907853269984665640564039457584007913129639935",
                     ],
                 },

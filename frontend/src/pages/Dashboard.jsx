@@ -7,7 +7,7 @@ import Nav from '../components/Nav'
 import Footer from '../components/Footer'
 import PillButton from '../components/PillButton'
 import VerdictChip from '../components/VerdictChip'
-import { VERDICTS } from '../lib/verdict'
+import { VERDICTS, VERDICT_ORDER } from '../lib/verdict'
 import { useAuth } from '../context/AuthContext'
 import { API_BASE_URL } from '../lib/api'
 
@@ -126,12 +126,23 @@ export default function Dashboard() {
     setStep(0)
     setShowPopup(false)
 
-    try {
-      // Step interval animation triggers
-      const t1 = setTimeout(() => setStep(1), 800)
-      const t2 = setTimeout(() => setStep(2), 1600)
-      const t3 = setTimeout(() => setStep(3), 2400)
+    // Clear any result from a previous run so a failed/in-flight request can
+    // never display leftover data under the step-gated cards below.
+    setVerdict('')
+    setStaticFindings([])
+    setModelConsensus([])
+    setExploitMatches([])
+    setAttestationTxHash('')
+    setCacheHit(false)
 
+    // Step interval animation triggers — must be cancelled on failure too,
+    // otherwise they keep firing on their own schedule and re-reveal the
+    // step-gated cards after the catch block below has already reset step to 0.
+    const t1 = setTimeout(() => setStep(1), 800)
+    const t2 = setTimeout(() => setStep(2), 1600)
+    const t3 = setTimeout(() => setStep(3), 2400)
+
+    try {
       const token = localStorage.getItem('vetra_session_token')
       const resp = await fetch(`${API_BASE_URL}/api/audit`, {
         method: 'POST',
@@ -171,6 +182,9 @@ export default function Dashboard() {
         setShowPopup(true)
       }
     } catch (err) {
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
       console.error('Audit run failure:', err)
       alert(err.message || 'Failed to complete security audit.')
       setStatus('idle')
@@ -360,9 +374,16 @@ export default function Dashboard() {
                   <>
                     <div className="h-40">
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={modelConsensus} layout="vertical" margin={{ left: 8, right: 16 }}>
+                        <BarChart
+                          data={modelConsensus.map((m) => ({
+                            ...m,
+                            severity: VERDICT_ORDER.indexOf(m.risk_category) + 1,
+                          }))}
+                          layout="vertical"
+                          margin={{ left: 8, right: 16 }}
+                        >
                           <CartesianGrid horizontal={false} stroke="var(--color-border)" />
-                          <XAxis type="number" domain={[0, 1]} hide />
+                          <XAxis type="number" domain={[0, VERDICT_ORDER.length]} hide />
                           <YAxis
                             type="category"
                             dataKey="model"
@@ -371,7 +392,7 @@ export default function Dashboard() {
                             axisLine={false}
                             tickLine={false}
                           />
-                          <Bar dataKey="confidence" radius={[0, 6, 6, 0]} barSize={14}>
+                          <Bar dataKey="severity" radius={[0, 6, 6, 0]} barSize={14}>
                             {modelConsensus.map((entry) => (
                               <Cell key={entry.model} fill={VERDICTS[entry.risk_category]?.color || 'var(--color-muted)'} />
                             ))}
@@ -423,7 +444,7 @@ export default function Dashboard() {
                 <div className="flex flex-col gap-2 font-mono text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
                   <span className="flex items-center gap-2">
                     <Hash size={14} />
-                    {attestationTxHash ? `${attestationTxHash.slice(0, 16)}...${attestationTxHash.slice(-8)}` : '0xPendingAttestationHash'}
+                    {attestationTxHash ? `${attestationTxHash.slice(0, 16)}...${attestationTxHash.slice(-8)}` : 'Not attested — on-chain write failed, verdict above is still real'}
                   </span>
                   {attestationTxHash && (
                     <a

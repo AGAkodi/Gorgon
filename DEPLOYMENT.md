@@ -93,6 +93,90 @@ and fall back to a version you confirm has an aarch64 binary if not.
 sits idle/underutilized. Point your uptime monitor at it (see below) —
 that's exactly the kind of thing it exists to catch.
 
+## Option A0: A2MCP listing endpoint only — one Railway service (fastest path to submitting)
+
+This is the deploy that the **OKX.AI A2MCP listing** actually needs, and
+nothing more. The listing points agents at a single public URL: the MCP
+server's SSE endpoint. That endpoint internally depends on the x402
+facilitator and an anvil EVM fork, but neither of those should be public —
+so all three run in **one container / one Railway service** via
+`mcp-server/start_listing.sh`, which boots them in dependency order
+(fork → facilitator → MCP server, health-gated) and binds the MCP server to
+Railway's injected `$PORT`. The website + `auth_server.py` are a *separate*,
+optional deploy (the human-facing dashboard) and are not required to list.
+
+```sh
+# In Railway: New Project → Deploy from this repo (it builds the root Dockerfile).
+# Then, on the service:
+#   Settings → Start Command:   bash mcp-server/start_listing.sh
+#   Settings → Networking:      Generate Domain (this public URL is what you
+#                               paste into the OKX A2MCP listing)
+#   Variables:                  set every real secret from .env (see below) —
+#                               NOT committed; .env is gitignored + dockerignored.
+```
+
+Minimum variables this service needs (from `.env`): `GROQ_API_KEY`
+(+ `GROQ_MODEL` if pinning a model), `X_LAYER_TESTNET_RPC_URL`,
+`ATTESTATION_WALLET_PRIVATE_KEY`, `ATTESTATION_CONTRACT_ADDRESS`,
+`PAYMENT_TOKEN_ADDRESS`, `PAYMENT_NETWORK`, and
+`SANDBOX_DECOY_WALLET_PRIVATE_KEY`. Leave `FACILITATOR_PORT`/`EVM_FORK_PORT`
+at their defaults so `FACILITATOR_URL=http://127.0.0.1:4022` and
+`EVM_FORK_RPC_URL=http://127.0.0.1:8555` stay internally consistent — don't
+override just one of the pair.
+
+Verified locally before writing this: `start_listing.sh` boots all three in
+order and the resulting endpoint answers MCP tool discovery
+(`get_security_verdict`, `simulate_wallet_interaction`, `health`) and a
+spec-correct x402 `402` challenge (amount/asset/network). It has **not** been
+build-tested inside Docker on this machine (no Docker here — same caveat as
+the top of this file), so do one `docker build` + a `bash
+mcp-server/start_listing.sh` smoke run on the host before trusting it live.
+
+The A2MCP registration itself (register your Agentic Wallet, install Onchain
+OS, register as an A2MCP ASP, submit the listing) happens through your own
+OKX agent per OKX's flow — this deploy just gives you the public,
+x402-compliant endpoint URL that step needs.
+
+## Option A0b: Website + API in one service (Option 2 — single deploy, no CORS)
+
+The human-facing site (marketing pages + Verdict Dashboard + Sandbox) and the
+API it calls, as **one Railway service** with **one public URL**. The FastAPI
+auth server serves the built React frontend from the same origin, so there's
+no CORS to configure and no separate `VITE_API_BASE_URL` to set. This is
+independent of the A2MCP listing above — it's the human UI, not the agent
+endpoint, and it does **not** gate the OKX submission.
+
+```sh
+# In Railway: New Project → Deploy from this repo (builds the root Dockerfile,
+# which is multi-stage: a node stage compiles frontend/dist, the python stage
+# serves it). Then on the service:
+#   Settings → Start Command:   bash mcp-server/start_web.sh
+#   Settings → Networking:      Generate Domain
+#   Variables:                  the same secrets as Option A0, PLUS the
+#                               Supabase vars if using Supabase instead of the
+#                               bundled SQLite fallback.
+```
+
+How it works: `frontend/dist` is `.dockerignore`d, so the Dockerfile builds it
+in a `node:20-slim` stage and copies it into the python image. `auth_server.py`
+detects `frontend/dist` at startup and serves it (SPA fallback to `index.html`
+for client routes like `/dashboard`); if the build isn't present it silently
+runs API-only. `api.js` uses relative `/api` URLs in a production build (unset
+`VITE_API_BASE_URL`), so the browser calls the same origin. `auth_server.py`
+self-provisions its own EVM fork on startup, so no fork sidecar is needed here.
+
+Verified locally (native, not in Docker — Docker still unavailable here): built
+the frontend, restarted the auth server, loaded the site from its own origin,
+and confirmed `/`, `/dashboard`, and `/assets/*` serve correctly while `/api/*`
+and `/health` still hit the real handlers, and a real audit runs same-origin
+end to end. Do a `docker build` on the host to confirm the multi-stage build
+before trusting it live.
+
+Prefer the frontend on a CDN instead? Set `VITE_API_BASE_URL` at build time to
+this service's URL, deploy `frontend/` to Vercel (there's a `vercel.json` for
+SPA routing), and set `FRONTEND_ORIGIN=<your-vercel-url>` on this service so
+CORS allows it. That's Option 1 — two deploys, CDN frontend.
+
 ## Option A: Fly.io (costs money — no longer has a free tier)
 
 ```sh

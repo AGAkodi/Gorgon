@@ -110,6 +110,10 @@ per-wallet API keys) is silently broken, not working.
 
 - [ ] Deploy MCP server + auth gateway to an always-on host (not localhost) — **artifacts ready, not deployed** (per your call: prepare only, no hosting account/credentials involved). `Dockerfile` + `docker-compose.yml` (root) build and run all 3 backend services (`auth_server.py`, `facilitator.py`, `server.py`) plus an `anvil` EVM-fork sidecar; `requirements.txt` dry-run-verified to actually resolve (all packages installable). Added a `/health` endpoint to `auth_server.py` (didn't have one). Docker itself isn't available in this dev environment, so the build is reviewed carefully but not build-tested — see `DEPLOYMENT.md` for options.
 
+  **Update (2026-07-16): A2MCP listing endpoint made a one-service deploy.** The listing only needs the MCP SSE endpoint public; the facilitator + fork stay internal. Added `mcp-server/start_listing.sh` — boots fork → facilitator → MCP server in dependency order (health-gated, not fixed sleeps — the naïve parallel start races and crashes the MCP server on the facilitator call during init), binds the MCP server to Railway's `$PORT`. Added `DEPLOYMENT.md` "Option A0" with the exact Railway recipe (start command = `bash mcp-server/start_listing.sh`, generate domain, set secrets). Confirmed `.env` is dockerignored (secrets never in the image). Smoke-tested locally (container-shaped, native run — Docker still unavailable here): all three boot in order, and the endpoint answers MCP tool discovery + a spec-correct x402 `402` challenge (amount/asset/network). Still needs a real `docker build` on the host before trusting live.
+
+  **Update (2026-07-16): website + API made a one-service deploy too (Option 2).** Separate from the listing (human UI, not the agent endpoint — does NOT gate submission). `auth_server.py` now serves the built React frontend same-origin (SPA fallback for client routes; API-only if no build present), `frontend/src/lib/api.js` uses relative `/api` URLs in prod builds, root `Dockerfile` is now multi-stage (node builds `frontend/dist` → python serves it, since dist is dockerignored), added `mcp-server/start_web.sh` (binds auth server to Railway's `$PORT`; it self-provisions its own fork) and an optional `FRONTEND_ORIGIN` CORS var for the split (Vercel) variant. `DEPLOYMENT.md` "Option A0b" documents it. Verified end-to-end locally: built frontend, loaded the site from the auth server's own origin, `/`, `/dashboard`, `/assets/*` all serve while `/api/*` + `/health` still route correctly, and a real audit ran same-origin. Needs a real `docker build` on the host before trusting live.
+
   **Given no budget for hosting**, verified current (2026) pricing rather than assumed: Fly.io removed its free tier in 2024 (trial only, then paid), Railway's "free" tier is $1/month credit and explicitly not for always-on use. **Oracle Cloud's Always Free tier is the one real $0-forever option** — 2 ARM OCPU + 12GB RAM, no expiration — added as "Option 0" in `DEPLOYMENT.md` with the actual signup/setup steps. Flagged honestly: needs a card on file for identity verification (not charged on free resources), ARM64 capacity in popular regions is sometimes exhausted, Oracle can reclaim idle instances, and `solc`'s ARM64 Linux binary availability per-version hasn't been verified (x86_64 is what's been checked here) — confirm `solc-select install 0.8.20` actually works on the instance before assuming the rest of the build does.
 - [ ] Set up basic uptime monitoring/alerting — **documented, no account created** (per your call). See `DEPLOYMENT.md`'s "Uptime monitoring" section: which endpoint to point a monitor at (`/health` on whichever host runs `auth_server.py` — that's the one that matters, it's what's actually live), and free-tier service options (UptimeRobot, Better Uptime).
 - [x] Confirm final pay-per-call pricing, wire to real `/api/pricing` values
@@ -118,12 +122,35 @@ per-wallet API keys) is silently broken, not working.
 
 ---
 
-### Phase 7 — Disclaimer & Listing Submission
+### Phase 7 — Disclaimer & A2MCP Listing Submission
 
 - [x] Draft disclaimer/liability language (verdicts are risk signals, not guarantees) — tool output, README, site footer
-- [ ] Submit ASP for listing review at `okx.ai/tutorial/asp` — as early as possible
-- [x] Prepare listing description covering both tools (Verdict Engine + Sandbox)
-- [ ] Confirm listing is live before submitting the form
+- [x] Prepare listing description covering both tools (Verdict Engine + Sandbox) — `LISTING.md`
+
+**How OKX.AI listing actually works (confirmed 2026-07-16):** it is NOT a
+web form on a dashboard — registration runs through your own agent runtime
+via OKX's Onchain OS skill, and Vetra lists as an **A2MCP ASP** (pay-per-call,
+standardized API, no negotiation — matches the x402 endpoint we built). Your
+MCP endpoint must be free or x402-compliant; ours is x402-compliant
+(verified). Reachable via its Agent ID even before review approval, so it's
+demoable immediately — the review does not gate having something to show.
+
+Prerequisite (blocks everything below): deploy the endpoint so its URL is
+public — see Phase 6's "Option A0" one-service Railway deploy. The `/sse`
+public URL from that is what step 4 registers.
+
+Do these from your own OKX account / agent runtime (cannot be done for you):
+
+- [ ] 1. Have an agent runtime installed (OpenClaw / Hermes / Claude Code / Codex — whichever you already use)
+- [ ] 2. Install Onchain OS: send your agent → `npx skills add okx/onchainos-skills --yes -g`, then **start a new agent session** (it won't pick up the install mid-session)
+- [ ] 3. Log into Agentic Wallet: tell your agent → "Log in to Agentic Wallet on Onchain OS with my email" (have your email ready)
+- [ ] 4. Register the A2MCP ASP: "Help me register an A2MCP ASP on OKX.AI using OKX Agent Identity from Onchain OS" — supply the public `/sse` endpoint URL from the Phase 6 deploy
+- [ ] 5. List it: "Help me list my ASP on OKX.AI using Onchain OS" — **this starts a ≤24h review clock**; result goes to your Agentic Wallet email + the agent window
+- [ ] 6. (Automatic once live) A2MCP billing/settlement per call needs no per-call action from you
+
+**Sequencing given the Jul 17 00:00 UTC deadline:** do steps 1–4 today so
+step 5's 24h review isn't what you're racing at the very end. You can demo
+via the Agent ID before approval.
 
 ---
 

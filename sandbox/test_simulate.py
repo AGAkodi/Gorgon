@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "exploit-intel"))
 from deploy_contracts import deploy_sandbox, decoy_wallet_address  # noqa: E402
 from decode import decode_calldata  # noqa: E402
 from simulate import simulate_call, build_calldata, MAX_UINT256  # noqa: E402
-from drainer_registry import register_drainer, is_known_drainer  # noqa: E402
+from drainer_registry import is_known_drainer  # noqa: E402
 
 SCHEMA = json.loads((Path(__file__).parent.parent / "schemas" / "simulation.schema.json").read_text())
 
@@ -51,9 +51,11 @@ def main():
     print(f"Decoded BEFORE simulating: {decoded['method']} args={decoded['args']}")
     assert decoded["method"] == "approve(address,uint256)"
 
-    assert is_known_drainer(drainer) is None, "drainer shouldn't be registered yet"
-    register_drainer(drainer, label="Sandbox test fixture (DrainerClaim.sol)", source="sandbox_test_seed")
-    assert is_known_drainer(drainer) is not None
+    # deploy_sandbox() auto-registers the drainer via resync_sandbox_test_drainer()
+    # so the registry can never go stale across fork restarts
+    entry = is_known_drainer(drainer)
+    assert entry is not None, "deploy_sandbox should have auto-registered the drainer"
+    assert entry["source"] == "sandbox_test_seed"
 
     report_a = simulate_call(
         chain="evm", decoy_wallet=decoy, target=token, tracked_tokens=[token],

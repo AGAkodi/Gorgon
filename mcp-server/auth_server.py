@@ -146,10 +146,17 @@ class LocalDBHelper:
 # --- FastAPI Initialization ---
 app = FastAPI(title="Vetra API Gateway")
 
-# CORS setup for React frontend
+# CORS setup for the React frontend. Local dev origins are always allowed.
+# In the single-deploy setup (Option 2) the frontend is served from this same
+# server, so requests are same-origin and CORS never fires. FRONTEND_ORIGIN
+# lets a separately-hosted frontend (Option 1 — e.g. Vercel) be allowed
+# without a code change.
+_cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174"]
+if os.environ.get("FRONTEND_ORIGIN"):
+    _cors_origins.append(os.environ["FRONTEND_ORIGIN"])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:5174"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -562,6 +569,33 @@ def run_simulation(req: SimulateRequest, user: str = Depends(get_current_user)):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Serve the built frontend (Option 2 — single deploy, same-origin).
+# Registered LAST so every /api/* and /health route above wins first; this
+# catch-all only handles everything else. If frontend/dist doesn't exist
+# (e.g. backend-only Option 1 deploy, or local dev where Vite serves the UI),
+# this is skipped entirely and the server is API-only as before.
+# ---------------------------------------------------------------------------
+FRONTEND_DIST = (Path(__file__).parent.parent / "frontend" / "dist").resolve()
+if FRONTEND_DIST.is_dir():
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Serve a real built asset if it exists (js/css/images/favicon),
+        # otherwise fall back to index.html so client-side routes like
+        # /dashboard and /sandbox resolve. The resolve()+startswith guard
+        # blocks path traversal (e.g. ../../etc/passwd) out of dist.
+        candidate = (FRONTEND_DIST / full_path).resolve()
+        if full_path and candidate.is_file() and str(candidate).startswith(str(FRONTEND_DIST)):
+            return FileResponse(candidate)
+        return FileResponse(FRONTEND_DIST / "index.html")
+
+    print(f"[frontend] serving built SPA from {FRONTEND_DIST}")
+else:
+    print(f"[frontend] no build at {FRONTEND_DIST} — running API-only")
 
 
 if __name__ == "__main__":

@@ -34,20 +34,28 @@ ATTACKER_WALLET = "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"
 DECOY_WALLET_PK = os.environ.get("SANDBOX_DECOY_WALLET_PRIVATE_KEY")
 
 
-def _run(cmd: list) -> str:
-    result = subprocess.run(cmd, capture_output=True, text=True)
+def _run(cmd: list, cwd: Path = None) -> str:
+    result = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
     if result.returncode != 0:
         raise RuntimeError(f"command failed: {' '.join(cmd)}\n{result.stderr}")
     return result.stdout.strip()
 
 
 def compile_contracts():
+    # solc keys combined.json's "contracts" dict by each input path *as given*,
+    # relative to solc's own cwd when possible. The lookups below assume the
+    # "sandbox/contracts/...:Name" shape, so the compile must always run with
+    # cwd=REPO_ROOT and repo-root-relative paths — otherwise (e.g. when this
+    # is invoked from mcp-server/, as auth_server.py does) solc can't express
+    # the path relative to its cwd and falls back to absolute paths, and the
+    # lookup below raises a KeyError that looks like "deployment failed" with
+    # no other explanation.
     _run([
         "solc", "--combined-json", "abi,bin",
-        str(CONTRACTS_DIR / "MockERC20.sol"),
-        str(CONTRACTS_DIR / "DrainerClaim.sol"),
+        "sandbox/contracts/MockERC20.sol",
+        "sandbox/contracts/DrainerClaim.sol",
         "-o", str(BUILD_DIR), "--overwrite",
-    ])
+    ], cwd=REPO_ROOT)
     return json.loads((BUILD_DIR / "combined.json").read_text())["contracts"]
 
 

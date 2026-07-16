@@ -1,7 +1,30 @@
-# Vetra backend image — builds mcp-server/auth_server.py, facilitator.py,
-# and server.py from one image (they share the same Python dependency
-# tree). See docker-compose.yml for how each service is actually run, and
-# DEPLOYMENT.md for host-specific instructions (Fly.io/Railway/VPS).
+# Vetra image — builds all backend services (auth_server.py, facilitator.py,
+# server.py) AND the built React frontend from one image (they share the same
+# Python dependency tree; the frontend is compiled in a separate node stage
+# and copied in). See docker-compose.yml for how each service is run, and
+# DEPLOYMENT.md for host-specific instructions (Railway/Fly.io/VPS).
+#
+# Which process a container runs is chosen by the start command, not this
+# file's CMD:
+#   - A2MCP listing endpoint : bash mcp-server/start_listing.sh
+#   - Website + API (Option 2): bash mcp-server/start_web.sh
+#   - default CMD below       : auth_server.py (API only)
+
+# --- Stage 1: build the frontend (dist is .dockerignored, so build it here) ---
+FROM node:20-slim AS frontend-build
+WORKDIR /fe
+RUN npm install -g pnpm
+COPY frontend/package.json frontend/pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile || pnpm install
+COPY frontend/ ./
+# Same-origin build: leave VITE_API_BASE_URL unset so the SPA uses relative
+# /api URLs served by the same FastAPI process (Option 2). To point a build
+# at a separate backend instead, pass --build-arg VITE_API_BASE_URL=...
+ARG VITE_API_BASE_URL=""
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+RUN pnpm build
+
+# --- Stage 2: python runtime (backend + serves the built frontend) ---
 FROM python:3.11-slim
 
 # --- System deps ---
@@ -34,6 +57,12 @@ RUN solc-select install 0.8.20 && solc-select use 0.8.20
 
 # --- App code ---
 COPY . .
+
+# Built frontend from stage 1 (frontend/dist is .dockerignored from the build
+# context, so it must come from the node stage, not the COPY . . above).
+# auth_server.py serves this when start_web.sh runs; the MCP/facilitator
+# services simply ignore it.
+COPY --from=frontend-build /fe/dist ./frontend/dist
 
 EXPOSE 4021 4022 4023
 
