@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, ShieldHalf, LogOut, ChevronDown } from 'lucide-react'
+import { Menu, X, LogOut, ChevronDown } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import PillButton from './PillButton'
 
@@ -33,9 +33,7 @@ export default function Nav() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-bg group-hover:scale-105 transition-transform">
-            <ShieldHalf size={18} strokeWidth={2.5} />
-          </div>
+          <img src="/logo.png" alt="Vetra Logo" className="w-8 h-8 object-contain group-hover:scale-105 transition-transform" />
           <span className="font-display text-xl font-black tracking-tight text-ink">Vetra</span>
         </Link>
 

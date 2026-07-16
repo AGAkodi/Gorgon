@@ -17,6 +17,7 @@ import requests
 import jwt
 
 from rate_limit_http import check_auth_rate_limit, check_pipeline_rate_limit, check_light_rate_limit
+from pricing_config import VERDICT_PRICE_UI, SIMULATION_PRICE_UI
 
 # Load env from workspace .env
 env_path = Path(__file__).parent.parent / ".env"
@@ -216,9 +217,20 @@ def _ensure_sandbox_ready():
     if not _fork_is_up(SANDBOX_FORK_RPC):
         print(f"[sandbox] EVM fork not reachable at {SANDBOX_FORK_RPC}, starting one...")
         fork_script = Path(__file__).parent.parent / "sandbox" / "fork" / "start-evm-fork.sh"
-        subprocess.Popen(
-            [str(fork_script)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        )
+        try:
+            if os.name == 'nt':
+                subprocess.Popen(
+                    ["bash", str(fork_script)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            else:
+                subprocess.Popen(
+                    [str(fork_script)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+        except Exception as e:
+            print(f"[sandbox] WARNING: Failed to start fork process automatically: {e}")
+            print(f"[sandbox] WARNING: /api/simulate and /api/sandbox/config will fail until fork is started manually.")
+            return
+
         for _ in range(30):
             if _fork_is_up(SANDBOX_FORK_RPC):
                 break
@@ -444,8 +456,8 @@ def health():
 @app.get("/api/pricing")
 def get_pricing():
     return {
-        "verdict_price": 10,
-        "simulation_price": 20
+        "verdict_price": VERDICT_PRICE_UI,
+        "simulation_price": SIMULATION_PRICE_UI
     }
 
 

@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "attestation"))
 import env  # noqa: E402,F401 (loads .env)
 
 from eth_account import Account  # noqa: E402
+from pricing_config import VERDICT_PRICE_WEI
 from mcp import ClientSession  # noqa: E402
 from mcp.client.sse import sse_client  # noqa: E402
 
@@ -139,7 +140,7 @@ async def main():
             print("=== Test 2: get_security_verdict (paid) ===")
             payer_address = account.address
             pay_to_address = Account.from_key(os.environ["ATTESTATION_WALLET_PRIVATE_KEY"]).address
-            price = 10 * 10**18  # must match VERDICT_PRICE in server.py
+            price = int(VERDICT_PRICE_WEI)  # must match VERDICT_PRICE in server.py
 
             balance_before_payer = _token_balance(payer_address)
             balance_before_payto = _token_balance(pay_to_address)

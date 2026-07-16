@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { ShieldHalf } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -8,9 +7,7 @@ export default function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-7 h-7 rounded-full bg-brand flex items-center justify-center text-bg group-hover:scale-105 transition-transform">
-                <ShieldHalf size={15} strokeWidth={2.5} />
-              </div>
+              <img src="/logo.png" alt="Vetra Logo" className="w-7 h-7 object-contain group-hover:scale-105 transition-transform" />
               <span className="font-display text-base font-extrabold tracking-tight text-ink">Vetra</span>
             </Link>
             <p className="mt-3 max-w-xs text-xs leading-relaxed text-muted">

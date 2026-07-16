@@ -10,12 +10,7 @@ import AuthModal from './components/AuthModal'
 function App() {
   return (
     <AuthProvider>
-      {/* Obscura Page-Edge Decorative Framing */}
-      <div className="page-edge-frame" />
-      <div className="floating-square-chip" style={{ top: '8px', left: '8px' }} />
-      <div className="floating-square-chip" style={{ top: '8px', right: '8px' }} />
-      <div className="floating-square-chip" style={{ bottom: '8px', left: '8px' }} />
-      <div className="floating-square-chip" style={{ bottom: '8px', right: '8px' }} />
+
 
       <Routes>
         <Route path="/" element={<Home />} />

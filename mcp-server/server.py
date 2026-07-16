@@ -78,8 +78,7 @@ PAY_TO = Account.from_key(os.environ["ATTESTATION_WALLET_PRIVATE_KEY"]).address
 # token (18 decimals), not USD — see mcp-server/README.md for rationale.
 # Simulation costs more: it runs a real fork execution (deploy/impersonate/
 # multiple RPC round trips) vs. verdict's static analysis + LLM calls.
-VERDICT_PRICE = str(10 * 10**18)      # 10 vUSD
-SIMULATION_PRICE = str(20 * 10**18)   # 20 vUSD
+from pricing_config import VERDICT_PRICE_WEI as VERDICT_PRICE, SIMULATION_PRICE_WEI as SIMULATION_PRICE
 
 PERMIT2_EXTRA = {"assetTransferMethod": "permit2"}
 
@@ -135,7 +134,7 @@ verdict_wrapper = create_payment_wrapper(
         "Get a security verdict for a smart contract before your agent interacts "
         "with it. Runs static analysis, multi-model AI consensus, and exploit "
         "intelligence matching, and records an on-chain attestation. "
-        f"Costs {int(VERDICT_PRICE) // 10**18} vUSD per call (X Layer testnet, "
+        f"Costs {float(VERDICT_PRICE) / 10**18} vUSD per call (X Layer testnet, "
         "pay-per-call via x402). Args: chain ('evm'), address (contract "
         "address), source_code (Solidity source if you have it — omit for an "
         "explicit insufficient_data result rather than a guess). "
@@ -180,7 +179,7 @@ simulation_wrapper = create_payment_wrapper(
         "+ args) or raw calldata (e.g. decoded from a suspicious link — decode "
         "first, then pass it here to simulate). Runs on an isolated fork against "
         "a decoy wallet; never touches a real wallet or live site. "
-        f"Costs {int(SIMULATION_PRICE) // 10**18} vUSD per call (X Layer testnet, "
+        f"Costs {float(SIMULATION_PRICE) / 10**18} vUSD per call (X Layer testnet, "
         "pay-per-call via x402). Args: chain ('evm'), decoy_wallet (address to "
         "simulate from), target (contract being called), tracked_tokens (ERC20 "
         "addresses to watch balances for), function_signature+args OR calldata. "
@@ -211,8 +210,8 @@ def health() -> str:
 
 if __name__ == "__main__":
     print(f"Vetra MCP server running on http://0.0.0.0:{PORT}")
-    print(f"  get_security_verdict: {int(VERDICT_PRICE) // 10**18} vUSD/call")
-    print(f"  simulate_wallet_interaction: {int(SIMULATION_PRICE) // 10**18} vUSD/call")
+    print(f"  get_security_verdict: {float(VERDICT_PRICE) / 10**18} vUSD/call")
+    print(f"  simulate_wallet_interaction: {float(SIMULATION_PRICE) / 10**18} vUSD/call")
     print(f"  facilitator: {FACILITATOR_URL}")
     print(f"  pay_to: {PAY_TO}")
     mcp_server.run(transport="sse")

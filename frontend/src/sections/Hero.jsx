@@ -17,7 +17,7 @@ const floatFade = {
 
 function VerdictMock() {
   return (
-    <div className="bg-bg p-6 font-mono text-xs text-muted border-b border-border/40">
+    <div className="bg-bg p-6 pb-14 font-mono text-xs text-muted border-b border-border/40">
       <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
         <span className="text-ink font-bold select-all">0x7a3f...19Ec</span>
         <span className="text-verdict-safe font-semibold">confidence 94%</span>
@@ -45,7 +45,7 @@ function VerdictMock() {
 function SandboxMock() {
   const delta = useCountTo(-2.48, { duration: 1300, delay: 500 })
   return (
-    <div className="bg-bg p-6 font-mono text-xs text-muted">
+    <div className="bg-bg p-6 pb-14 font-mono text-xs text-muted">
       <div className="flex items-center justify-between border-b border-border/40 pb-3 mb-4">
         <span className="text-ink font-bold flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -158,10 +158,10 @@ export default function Hero() {
                 <VerdictMock />
               </DeviceFrame>
               {/* Floating Chips */}
-              <div className="absolute -top-3 -right-2">
+              <div className="absolute top-2 right-6">
                 <VerdictChip verdict="safe" size="sm" className="shadow-lg border border-border" />
               </div>
-              <div className="absolute -bottom-4 left-6">
+              <div className="absolute bottom-3 left-6">
                 <VerdictChip verdict="caution" size="sm" className="shadow-lg border border-border" />
               </div>
             </div>
@@ -186,12 +186,12 @@ export default function Hero() {
                 <SandboxMock />
               </DeviceFrame>
               {/* Floating Chips */}
-              <div className="absolute -top-4 -right-2 flex items-center gap-1.5 rounded-full border border-verdict-critical/30 bg-verdict-critical/10 px-3 py-1.5 text-xs font-semibold text-verdict-critical shadow-lg">
-                <Flame size={13} />
+              <div className="absolute top-2 right-6 inline-flex items-center rounded-full border font-medium bg-verdict-critical/10 border-verdict-critical/30 text-verdict-critical text-xs px-2.5 py-1 gap-1 shadow-lg border border-border">
+                <Flame size={14} strokeWidth={2.25} />
                 Critical Drainer
               </div>
-              <div className="absolute -bottom-4 left-6 flex items-center gap-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-500 shadow-lg">
-                <ShieldAlert size={13} />
+              <div className="absolute bottom-3 left-6 inline-flex items-center rounded-full border font-medium bg-blue-500/10 border-blue-500/30 text-blue-500 text-xs px-2.5 py-1 gap-1 shadow-lg border border-border">
+                <ShieldAlert size={14} strokeWidth={2.25} />
                 Decoy Session
               </div>
             </div>
