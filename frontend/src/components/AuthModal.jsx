@@ -6,12 +6,14 @@ export default function AuthModal() {
   const {
     showAuthModal,
     setShowAuthModal,
+    closeAuthModal,
     isSigning,
     selectedWallet,
     connectWallet,
     useOtherWallet,
     signMessage,
     pendingSiweMessage,
+    authError,
   } = useAuth()
 
   if (!showAuthModal) return null
@@ -26,7 +28,7 @@ export default function AuthModal() {
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/40 backdrop-blur-xs"
           onClick={() => {
-            if (!isSigning) setShowAuthModal(false)
+            if (!isSigning) closeAuthModal()
           }}
         />
 
@@ -46,13 +48,21 @@ export default function AuthModal() {
             </h3>
             {!isSigning && (
               <button
-                onClick={() => setShowAuthModal(false)}
+                onClick={closeAuthModal}
                 className="rounded-full border border-border p-1.5 text-muted hover:border-ink hover:text-ink transition-colors"
               >
                 <X size={16} />
               </button>
             )}
           </div>
+
+          {/* Connection / signing error — visible, not an alert() that vanishes */}
+          {authError && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-400/40 bg-red-500/10 p-3">
+              <ShieldAlert className="text-red-500 shrink-0 mt-0.5" size={14} />
+              <p className="text-[11px] text-red-600 dark:text-red-400 leading-normal">{authError}</p>
+            </div>
+          )}
 
           <p className="mt-2 text-xs text-muted">
             Vetra uses cryptographically secure wallet authentication for logs, API keys, and billing.

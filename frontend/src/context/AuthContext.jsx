@@ -26,6 +26,7 @@ export function AuthProvider({ children }) {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState(null)
   const [pendingSiweMessage, setPendingSiweMessage] = useState(null)
+  const [authError, setAuthError] = useState(null)
   const navigate = useNavigate()
 
   const isConnected = !!walletAddress && !!sessionToken
@@ -39,6 +40,7 @@ export function AuthProvider({ children }) {
   }
 
   const connectWallet = (walletName) => {
+    setAuthError(null)
     setSelectedWallet(walletName)
     setIsSigning(true)
     // Trigger signature request immediately
@@ -53,12 +55,15 @@ export function AuthProvider({ children }) {
       const provider = getInjectedProvider(preferOkx)
 
       if (!provider) {
-        alert(
+        // Surface the reason in the modal and drop back to the wallet picker
+        // instead of alert()-ing and leaving a dead "waiting..." state.
+        setAuthError(
           preferOkx
-            ? 'OKX Wallet not detected. Install it from okx.com/web3, or choose "Other Wallet" if you have a different EVM wallet installed.'
-            : 'No EVM wallet detected in this browser.'
+            ? 'OKX Wallet not detected in this browser. Install it from okx.com/web3, or choose "Other Wallet" if you have a different EVM wallet (MetaMask, Rabby, …).'
+            : 'No EVM wallet detected in this browser. Install a wallet extension (OKX Wallet, MetaMask, …) and try again.'
         )
         setIsSigning(false)
+        setSelectedWallet(null)
         return
       }
 
@@ -117,7 +122,12 @@ export function AuthProvider({ children }) {
       navigate('/dashboard')
     } catch (err) {
       console.error('Wallet authentication failure:', err)
-      alert(err.message || 'Authentication failed. Please try again.')
+      // Common case: user rejected the request in their wallet (code 4001).
+      const msg =
+        err?.code === 4001
+          ? 'Connection request was rejected in your wallet. Try again and approve it.'
+          : err?.message || 'Authentication failed. Please try again.'
+      setAuthError(msg)
       setIsSigning(false)
       setSelectedWallet(null)
       setPendingSiweMessage(null)
@@ -144,6 +154,13 @@ export function AuthProvider({ children }) {
         showAuthModal,
         selectedWallet,
         pendingSiweMessage,
+        authError,
+        closeAuthModal: () => {
+          setShowAuthModal(false)
+          setAuthError(null)
+          setSelectedWallet(null)
+          setIsSigning(false)
+        },
         setShowAuthModal,
         triggerLogin,
         connectWallet,

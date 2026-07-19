@@ -122,6 +122,15 @@ export default function Dashboard() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+
+    // Auth-gate: a scan needs a wallet session. If the user isn't connected,
+    // open the wallet-connect flow instead of firing a request that 401s and
+    // surfaces as a confusing "audit failed" error.
+    if (!isConnected) {
+      triggerLogin()
+      return
+    }
+
     setStatus('running')
     setStep(0)
     setShowPopup(false)
